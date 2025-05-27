@@ -1,6 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gamepad2 } from "lucide-react";
+import { Gamepad2, Library } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -21,11 +22,18 @@ export default function HomePage() {
             Create a customizable grid-based quiz game, manage teams, and track scores in real-time.
             Ready to challenge your class?
           </p>
-          <Link href="/setup" legacyBehavior>
-            <Button size="lg" className="w-full text-lg py-6">
-              Create New Game
-            </Button>
-          </Link>
+          <div className="w-full space-y-3">
+            <Link href="/setup" legacyBehavior>
+              <Button size="lg" className="w-full text-lg py-6">
+                <Gamepad2 className="mr-2 h-5 w-5"/> Create New Game
+              </Button>
+            </Link>
+            <Link href="/library" legacyBehavior>
+              <Button size="lg" variant="outline" className="w-full text-lg py-6">
+                <Library className="mr-2 h-5 w-5"/> Open My Library
+              </Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -31,7 +31,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* New colors based on image */
+    /* Game specific colors from image */
     --game-header-background: 40 95% 75%; /* Warm yellow-orange */
     --game-header-foreground: 30 70% 25%; /* Dark brown/orange for text */
     --current-team-highlight-background: 330 90% 70%; /* Vibrant pink */
@@ -43,6 +43,16 @@
     --tile-revealed-correct-background: 120 60% 88%; /* Lighter green */
     --tile-revealed-incorrect-background: 0 70% 90%; /* Lighter red */
     --tile-revealed-muted-background: 0 0% 90%; /* Lighter gray */
+
+    /* Library page specific colors from image */
+    --library-header-background: 40 95% 75%; /* Same Yellow-Orange as game header */
+    --library-header-foreground: 30 70% 25%; /* Same Dark brown/orange */
+    --library-sidebar-header-background: 180 50% 45%; /* Teal color (approx) */
+    --library-sidebar-header-foreground: 0 0% 100%; /* White */
+    --library-sidebar-active-background: 30 90% 60%; /* Orange for "Folders" highlight (approx) */
+    --library-sidebar-active-foreground: 0 0% 100%; /* White */
+    --library-action-button-background: 180 50% 45%; /* Teal for "+ Game", "Folder" buttons */
+    --library-action-button-foreground: 0 0% 100%; /* White */
 
 
     /* Sidebar colors (can be adjusted if a sidebar is used) */
@@ -78,7 +88,7 @@
     --input: 217 30% 28%;
     --ring: 217 89% 60%;
 
-     /* New dark theme colors based on image (adjust as needed) */
+     /* Game specific dark theme colors based on image (adjust as needed) */
     --game-header-background: 40 70% 30%;
     --game-header-foreground: 40 90% 85%;
     --current-team-highlight-background: 330 70% 40%;
@@ -90,6 +100,16 @@
     --tile-revealed-correct-background: 120 50% 30%;
     --tile-revealed-incorrect-background: 0 60% 35%;
     --tile-revealed-muted-background: 0 0% 25%;
+
+    /* Library page specific dark colors */
+    --library-header-background: 40 70% 30%;
+    --library-header-foreground: 40 90% 85%;
+    --library-sidebar-header-background: 180 40% 30%; 
+    --library-sidebar-header-foreground: 0 0% 95%;
+    --library-sidebar-active-background: 30 70% 40%;
+    --library-sidebar-active-foreground: 0 0% 95%;
+    --library-action-button-background: 180 40% 30%;
+    --library-action-button-foreground: 0 0% 95%;
 
 
     --sidebar-background: 217 30% 12%;
@@ -113,7 +133,7 @@
   }
 }
 
-/* Custom class for the game header background */
+/* Custom classes for game specific colors */
 .bg-game-header {
   background-color: hsl(var(--game-header-background));
   color: hsl(var(--game-header-foreground));
@@ -121,8 +141,6 @@
 .text-game-header-foreground {
   color: hsl(var(--game-header-foreground));
 }
-
-/* Custom class for current team highlight */
 .bg-current-team-highlight {
   background-color: hsl(var(--current-team-highlight-background));
   color: hsl(var(--current-team-highlight-foreground));
@@ -130,8 +148,6 @@
 .text-current-team-highlight-foreground {
   color: hsl(var(--current-team-highlight-foreground));
 }
-
-/* Custom class for tile default */
 .bg-tile-default {
   background-color: hsl(var(--tile-default-background));
   color: hsl(var(--tile-default-foreground));
@@ -139,7 +155,6 @@
 .text-tile-default-foreground {
   color: hsl(var(--tile-default-foreground));
 }
-
 .bg-tile-revealed-correct {
   background-color: hsl(var(--tile-revealed-correct-background)) !important;
 }
@@ -149,9 +164,32 @@
 .bg-tile-revealed-muted {
   background-color: hsl(var(--tile-revealed-muted-background)) !important;
 }
-
-
-/* Custom class for grid background */
 .bg-grid-area {
   background-color: hsl(var(--grid-background));
+}
+
+/* Custom classes for library specific colors */
+.bg-library-header {
+  background-color: hsl(var(--library-header-background));
+}
+.text-library-header-foreground {
+  color: hsl(var(--library-header-foreground));
+}
+.bg-library-sidebar-header {
+  background-color: hsl(var(--library-sidebar-header-background));
+}
+.text-library-sidebar-header-foreground {
+  color: hsl(var(--library-sidebar-header-foreground));
+}
+.bg-library-sidebar-active {
+  background-color: hsl(var(--library-sidebar-active-background));
+}
+.text-library-sidebar-active-foreground {
+  color: hsl(var(--library-sidebar-active-foreground));
+}
+.bg-library-action-button {
+  background-color: hsl(var(--library-action-button-background));
+}
+.text-library-action-button-foreground {
+  color: hsl(var(--library-action-button-foreground));
 }
