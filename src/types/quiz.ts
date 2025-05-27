@@ -1,8 +1,14 @@
+
 export interface Question {
   id: string;
   questionText: string;
   answerText: string;
   points: number;
+  media?: {
+    url: string;
+    type: 'image' | 'video' | 'gif'; // We'll primarily implement 'image'/'gif' display for now
+    alt: string;
+  };
 }
 
 export interface Topic {

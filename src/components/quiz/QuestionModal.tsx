@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,6 +6,7 @@ import { useGame } from '@/contexts/GameContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
+import Image from 'next/image'; // Import next/image
 
 export default function QuestionModal() {
   const { gameState, adjudicateAnswer, closeQuestionModal } = useGame();
@@ -16,6 +18,7 @@ export default function QuestionModal() {
 
   const { activeQuestion, currentTileId } = gameState;
   const tile = gameState.tiles.find(t => t.id === currentTileId);
+  const media = activeQuestion?.media;
 
   const handleAdjudication = (isCorrect: boolean) => {
     adjudicateAnswer(isCorrect);
@@ -27,23 +30,8 @@ export default function QuestionModal() {
   };
   
   const handleClose = () => {
-    // If a question is open but not yet adjudicated, this effectively means "no points" or "skip".
-    // For now, we will only allow closing if adjudication happened.
-    // Or, if we allow closing without adjudication, it would be like clicking incorrect.
-    // For simplicity, the modal auto-closes on adjudication.
-    // This explicit close is more like a "cancel" if implemented.
-    // For now, we rely on adjudication to close.
-    // If we need an explicit close before adjudication, call closeQuestionModal()
-    // but ensure game state handles it (e.g. marks tile as revealed, moves turn).
-    // The current GameContext `closeQuestionModal` just sets activeQuestion to null.
-    // Let's use an explicit close on the Dialog component itself if needed.
-    // The context's closeQuestionModal might be more for internal state reset
-    // rather than user-invoked modal dismissal.
-    // For now, the X button on DialogContent will handle this.
-    // When 'X' is clicked, Dialog's onOpenChange will fire.
-    // We need to ensure onOpenChange for the Dialog properly cleans up.
-    setShowAnswer(false); // Reset answer visibility
-    closeQuestionModal(); // This will clear activeQuestion in context
+    setShowAnswer(false); 
+    closeQuestionModal(); 
   };
 
 
@@ -55,6 +43,22 @@ export default function QuestionModal() {
         </DialogHeader>
         
         <div className="p-6 space-y-6">
+          {media && (media.type === 'image' || media.type === 'gif') && (
+            <div 
+              className="relative w-full aspect-video mb-4 rounded-md overflow-hidden shadow-md bg-muted"
+              data-ai-hint="quiz illustration" // Generic hint for placeholders
+            >
+              <Image
+                src={media.url}
+                alt={media.alt || "Question related media"}
+                layout="fill"
+                objectFit="cover"
+                priority={true} // Prioritize loading image in modal
+              />
+            </div>
+          )}
+          {/* TODO: Add video support here if media.type === 'video' */}
+
           <DialogDescription className="text-xl text-foreground min-h-[60px]">
             {activeQuestion.questionText}
           </DialogDescription>
@@ -94,4 +98,3 @@ export default function QuestionModal() {
     </Dialog>
   );
 }
-
