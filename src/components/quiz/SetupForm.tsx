@@ -1,17 +1,18 @@
+
 'use client';
 
 import { useState, type FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame } from '@/contexts/GameContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { TOPICS, GRID_SIZES, MIN_TEAMS, MAX_TEAMS } from '@/lib/quizData';
 import TeamNameInput from './TeamNameInput';
 import { useToast } from '@/hooks/use-toast';
 import type { GameSetupConfig } from '@/types/quiz';
+import { Users, LayoutGrid, BookOpen } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function SetupForm() {
   const router = useRouter();
@@ -62,7 +63,6 @@ export default function SetupForm() {
       return;
     }
 
-
     const config: GameSetupConfig = {
       topicId,
       numberOfTeams,
@@ -81,70 +81,94 @@ export default function SetupForm() {
     }
   };
 
+  const teamOptions = Array.from({ length: MAX_TEAMS - MIN_TEAMS + 1 }, (_, i) => MIN_TEAMS + i);
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl">Game Configuration</CardTitle>
+        <CardTitle className="text-2xl text-center">Game Configuration</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="topic">Topic/Question Repository</Label>
-            <Select value={topicId} onValueChange={setTopicId}>
-              <SelectTrigger id="topic">
-                <SelectValue placeholder="Select a topic" />
-              </SelectTrigger>
-              <SelectContent>
-                {TOPICS.map(topic => (
-                  <SelectItem key={topic.id} value={topic.id}>
-                    {topic.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="space-y-8">
+          {/* Topic Selection */}
+          <div className="space-y-3 text-center">
+            <Label className="text-lg font-semibold flex items-center justify-center">
+              <BookOpen className="mr-2 h-5 w-5 text-primary" />
+              Choose a Topic
+            </Label>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {TOPICS.map(topic => (
+                <Button
+                  key={topic.id}
+                  type="button"
+                  variant={topicId === topic.id ? 'default' : 'outline'}
+                  onClick={() => setTopicId(topic.id)}
+                  className={cn("min-w-[120px]", topicId === topic.id ? "ring-2 ring-primary ring-offset-2" : "")}
+                >
+                  {topic.name}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="numberOfTeams">Number of Teams ({MIN_TEAMS}-{MAX_TEAMS})</Label>
-            <Input
-              id="numberOfTeams"
-              type="number"
-              min={MIN_TEAMS}
-              max={MAX_TEAMS}
-              value={numberOfTeams}
-              onChange={e => setNumberOfTeams(parseInt(e.target.value))}
-              required
-            />
+          {/* Number of Teams Selection */}
+          <div className="space-y-3 text-center">
+            <Label className="text-lg font-semibold flex items-center justify-center">
+              <Users className="mr-2 h-5 w-5 text-primary" />
+              Number of Teams
+            </Label>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {teamOptions.map(num => (
+                <Button
+                  key={num}
+                  type="button"
+                  variant={numberOfTeams === num ? 'default' : 'outline'}
+                  onClick={() => setNumberOfTeams(num)}
+                  className={cn("w-12 h-12 text-lg", numberOfTeams === num ? "ring-2 ring-primary ring-offset-2" : "")}
+                >
+                  {num}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          {teamNames.map((name, index) => (
-            <TeamNameInput
-              key={index}
-              teamNumber={index + 1}
-              value={name}
-              onChange={newName => handleTeamNameChange(index, newName)}
-              topicForSuggestion={TOPICS.find(t => t.id === topicId)?.name || 'general quiz'}
-            />
-          ))}
-
-          <div className="space-y-2">
-            <Label htmlFor="gridSize">Grid Size (Number of Tiles)</Label>
-            <Select value={gridSize.toString()} onValueChange={val => setGridSize(parseInt(val))}>
-              <SelectTrigger id="gridSize">
-                <SelectValue placeholder="Select grid size" />
-              </SelectTrigger>
-              <SelectContent>
-                {GRID_SIZES.map(size => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size} tiles
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Team Name Inputs */}
+          <div className="space-y-4">
+            {teamNames.map((name, index) => (
+              <TeamNameInput
+                key={index}
+                teamNumber={index + 1}
+                value={name}
+                onChange={newName => handleTeamNameChange(index, newName)}
+                topicForSuggestion={TOPICS.find(t => t.id === topicId)?.name || 'general quiz'}
+              />
+            ))}
           </div>
+          
+          {/* Grid Size Selection */}
+          <div className="space-y-3 text-center">
+            <Label className="text-lg font-semibold flex items-center justify-center">
+              <LayoutGrid className="mr-2 h-5 w-5 text-primary" />
+              Grid Size
+            </Label>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {GRID_SIZES.map(size => (
+                <Button
+                  key={size}
+                  type="button"
+                  variant={gridSize === size ? 'default' : 'outline'}
+                  onClick={() => setGridSize(size)}
+                   className={cn("w-16 h-12 text-lg", gridSize === size ? "ring-2 ring-primary ring-offset-2" : "")}
+                >
+                  {size}
+                </Button>
+              ))}
+            </div>
+          </div>
+
         </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+        <CardFooter className="pt-8">
+          <Button type="submit" className="w-full text-lg py-3" disabled={isLoading}>
             {isLoading ? 'Starting Game...' : 'Start Game'}
           </Button>
         </CardFooter>
