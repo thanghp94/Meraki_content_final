@@ -82,7 +82,7 @@ export default function QuestionModal() {
           )}
           {/* TODO: Add video support here if media.type === 'video' */}
 
-          <DialogDescription className="text-2xl md:text-3xl text-foreground text-center min-h-[60px] my-6">
+          <DialogDescription className="text-3xl md:text-4xl font-bold text-foreground text-center min-h-[60px] my-6">
             {activeQuestion.questionText}
           </DialogDescription>
 
@@ -92,12 +92,8 @@ export default function QuestionModal() {
             </Button>
           )}
 
-          {showAnswer && (
-            <div className="p-4 bg-secondary rounded-md shadow-inner w-full max-w-lg text-center">
-              <p className="text-lg font-semibold text-primary">Correct Answer:</p>
-              <p className="text-md text-secondary-foreground">{activeQuestion.answerText}</p>
-            </div>
-          )}
+          {/* Removed the display of the correct answer text */}
+          
         </div>
 
         {showAnswer && (
