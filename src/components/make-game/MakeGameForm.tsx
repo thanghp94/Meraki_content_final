@@ -9,10 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, FileUp, Globe, Image as ImageIcon, Lock, Save, Users, X } from 'lucide-react';
+import { Camera, FileUp, Globe, Image as ImageIcon, Lock, Save, Users, X, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid'; // For generating a mock game ID
+import { addGameToFirestore } from '@/lib/firebaseService'; // Import the service
+import type { GameStub } from '@/types/library';
+
 
 // Mock languages for the dropdown
 const languages = [
@@ -28,24 +30,43 @@ export default function MakeGameForm() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [language, setLanguage] = useState('en');
-  const [tags, setTags] = useState('');
+  const [tags, setTags] = useState(''); // Still a string, could be parsed later
   const [visibility, setVisibility] = useState('unlisted');
   const [imageUrl, setImageUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [aiHint, setAiHint] = useState(''); // For placeholder images
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Basic validation
     if (!title.trim()) {
       toast({ title: 'Title Required', description: 'Please enter a title for your game.', variant: 'destructive' });
       return;
     }
-    const gameData = { title, description, language, tags, visibility, imageUrl };
-    console.log("Game Data Submitted:", gameData);
-    toast({ title: 'Game Created!', description: `${title} has been created. Now add some questions.` });
-    
-    // In a real app, you would save the game to a backend and get a real ID.
-    const mockGameId = uuidv4(); 
-    router.push(`/edit-game/${mockGameId}?name=${encodeURIComponent(title)}`); 
+    setIsLoading(true);
+
+    // Prepare game data for Firestore
+    // Omit 'id', 'type', 'createdAt', 'updatedAt', 'questionCount', 'playCount' as Firestore/service will handle them
+    const gameDataForFirestore: Omit<GameStub, 'id' | 'type' | 'createdAt' | 'updatedAt' | 'questionCount' | 'playCount'> & { language: string; tags: string; visibility: string; imageUrl?: string, aiHint?: string } = {
+      name: title,
+      subtitle: description, // Using description as subtitle, adjust if needed
+      thumbnailUrl: imageUrl, // This will be overridden by service if empty, to use placeholder
+      language,
+      tags, // Consider storing tags as an array in Firestore later
+      visibility, // You might want to map this to boolean flags if needed
+      imageUrl: imageUrl || undefined, // Pass to service
+      aiHint: aiHint || title.split(' ').slice(0,2).join(' ') || undefined, // Simple AI hint from title
+    };
+
+    try {
+      const gameId = await addGameToFirestore(gameDataForFirestore);
+      toast({ title: 'Game Created!', description: `"${title}" has been created. Now add some questions.` });
+      router.push(`/edit-game/${gameId}?name=${encodeURIComponent(title)}`);
+    } catch (error) {
+      console.error("Failed to create game:", error);
+      toast({ title: 'Error Creating Game', description: (error as Error).message || 'Could not save the game to the database.', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -71,20 +92,21 @@ export default function MakeGameForm() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="mt-1 text-base"
+                  required
                 />
               </div>
               <div>
-                <Label htmlFor="description" className="text-base font-semibold">Description</Label>
+                <Label htmlFor="description" className="text-base font-semibold">Description (Subtitle)</Label>
                 <Textarea
                   id="description"
-                  placeholder="What's it about?"
+                  placeholder="A brief description or subtitle"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="mt-1 text-base min-h-[100px]"
                 />
               </div>
               <div>
-                <Label htmlFor="language" className="text-base font-semibold">Language (Autofilled)</Label>
+                <Label htmlFor="language" className="text-base font-semibold">Language</Label>
                 <Select value={language} onValueChange={setLanguage}>
                   <SelectTrigger id="language" className="mt-1 text-base">
                     <SelectValue placeholder="Select language" />
@@ -109,28 +131,40 @@ export default function MakeGameForm() {
                 />
                 <p className="text-xs text-muted-foreground mt-1">Use commas to add multiple tags</p>
               </div>
+               <div>
+                <Label htmlFor="aiHint" className="text-base font-semibold">AI Image Hint (Optional)</Label>
+                <Input
+                  id="aiHint"
+                  placeholder="e.g. science lab, historical map"
+                  value={aiHint}
+                  onChange={(e) => setAiHint(e.target.value)}
+                  className="mt-1 text-base"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Keywords for placeholder image generation (1-2 words).</p>
+              </div>
             </div>
 
             {/* Right Column - Image and Visibility */}
             <div className="space-y-6">
               <div>
-                <Label className="text-base font-semibold">Game Image/GIF</Label>
-                <p className="text-xs text-muted-foreground mb-2">Browse gifs, upload image or paste URL (0.25MB max)</p>
-                <div className="flex flex-col sm:flex-row gap-2 mb-2">
-                  <Button type="button" variant="default" className="bg-[hsl(var(--current-team-highlight-background))] hover:bg-[hsl(var(--current-team-highlight-background),0.9)] text-[hsl(var(--current-team-highlight-foreground))] flex-1">
-                    <ImageIcon className="mr-2" /> Image Library
-                  </Button>
-                  <Button type="button" variant="outline" className="flex-1">
-                    <FileUp className="mr-2" /> Choose File
-                  </Button>
-                </div>
+                <Label className="text-base font-semibold">Game Image/GIF URL (Optional)</Label>
+                <p className="text-xs text-muted-foreground mb-2">Paste URL for game image. If empty, a placeholder will be used.</p>
                 <Input
                   type="url"
+                  id="imageUrl"
                   placeholder="http://example.com/image.jpeg"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  className="text-base"
+                  className="text-base mt-1"
                 />
+                 <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                  <Button type="button" variant="default" className="bg-[hsl(var(--current-team-highlight-background))] hover:bg-[hsl(var(--current-team-highlight-background),0.9)] text-[hsl(var(--current-team-highlight-foreground))] flex-1" onClick={() => alert("Image Library TBI")}>
+                    <ImageIcon className="mr-2" /> Image Library
+                  </Button>
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => alert("Choose File TBI")}>
+                    <FileUp className="mr-2" /> Choose File
+                  </Button>
+                </div>
               </div>
 
               <div>
@@ -173,11 +207,16 @@ export default function MakeGameForm() {
         </TabsContent>
       </Tabs>
       <div className="bg-muted/50 px-6 sm:px-8 py-4 border-t flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-        <Button type="button" variant="outline" onClick={handleCancel} className="text-base">
+        <Button type="button" variant="outline" onClick={handleCancel} className="text-base" disabled={isLoading}>
           <X className="mr-2 h-4 w-4" /> Cancel
         </Button>
-        <Button type="submit" className="text-base bg-[hsl(var(--library-action-button-background))] hover:bg-[hsl(var(--library-action-button-background),0.9)] text-[hsl(var(--library-action-button-foreground))]">
-          <Save className="mr-2 h-4 w-4" /> Make game
+        <Button 
+            type="submit" 
+            className="text-base bg-[hsl(var(--library-action-button-background))] hover:bg-[hsl(var(--library-action-button-background),0.9)] text-[hsl(var(--library-action-button-foreground))]"
+            disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {isLoading ? 'Saving...' : 'Make game'}
         </Button>
       </div>
     </form>

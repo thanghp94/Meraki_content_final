@@ -5,10 +5,10 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
-  Search, Folder as FolderIcon, Gamepad2, Heart, Users, History, Trash2, Sparkles, ArrowDownAZ, FolderPlus 
+  Search, Folder as FolderIcon, Gamepad2, Heart, Users, History, Trash2, Sparkles, ArrowDownAZ, FolderPlus, Loader2 
 } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
 
 interface LibrarySidebarProps {
   className?: string;
@@ -17,9 +17,10 @@ interface LibrarySidebarProps {
   onFilterChange: 
     ((filter: 'all' | 'folders' | 'games') => void) |
     ((filter: 'likes' | 'following' | 'history' | 'deleted') => void);
-  onNewGame: () => void; // Kept for consistency, but will be overridden by direct navigation
+  onNewGame: () => void;
   onNewFolder: () => void;
   folderCount: number;
+  isCreatingFolder?: boolean; // To show loading state on folder button
 }
 
 type NavItemKey = 'all' | 'games' | 'folders' | 'likes' | 'following';
@@ -39,10 +40,10 @@ const filterButtons = [
 ];
 
 export default function LibrarySidebar({ 
-  className, onSearch, activeFilter, onFilterChange, onNewFolder, folderCount
+  className, onSearch, activeFilter, onFilterChange, onNewGame, onNewFolder, folderCount, isCreatingFolder
 }: LibrarySidebarProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,13 +54,10 @@ export default function LibrarySidebar({
     if (filterKey === 'all' || filterKey === 'folders' || filterKey === 'games') {
       (onFilterChange as (filter: 'all' | 'folders' | 'games') => void)(filterKey);
     } else {
+      // Cast for other filters, keeping existing alert logic
       (onFilterChange as (filter: 'likes' | 'following' | 'history' | 'deleted') => void)(filterKey as 'likes' | 'following');
       alert(`${navItems.find(item => item.key === filterKey)?.label} clicked - TBI`);
     }
-  };
-
-  const handleCreateGame = () => {
-    router.push('/make-game'); // Navigate to the new make-game page
   };
 
   return (
@@ -77,7 +75,7 @@ export default function LibrarySidebar({
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
-            if(!e.target.value) onSearch('');
+            if(!e.target.value) onSearch(''); // Trigger search with empty string to reset
           }}
         />
         <Button type="submit" size="icon" variant="outline">
@@ -132,7 +130,7 @@ export default function LibrarySidebar({
         <Button 
           size="lg" 
           className="w-full bg-library-action-button text-library-action-button-foreground hover:bg-library-action-button/90 text-base"
-          onClick={handleCreateGame} // Updated to use the new handler
+          onClick={onNewGame}
         >
           <Gamepad2 className="mr-2 h-5 w-5" /> + Game
         </Button>
@@ -141,11 +139,12 @@ export default function LibrarySidebar({
           size="lg" 
           className="w-full border-[hsl(var(--library-action-button-background))] text-[hsl(var(--library-action-button-background))] hover:bg-[hsla(var(--library-action-button-background),0.1)] text-base"
           onClick={onNewFolder}
+          disabled={isCreatingFolder}
         >
-          <FolderPlus className="mr-2 h-5 w-5" /> Folder
+          {isCreatingFolder ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FolderPlus className="mr-2 h-5 w-5" />}
+          {isCreatingFolder ? 'Creating...' : 'Folder'}
         </Button>
       </div>
     </aside>
   );
 }
-
