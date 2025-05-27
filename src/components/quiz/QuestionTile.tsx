@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Tile } from '@/types/quiz';
@@ -15,12 +16,15 @@ export default function QuestionTile({ tile, onClick }: QuestionTileProps) {
 
   return (
     <Button
-      variant={isRevealed ? "secondary" : "default"}
+      variant="default" // Use default and override with custom classes
       className={cn(
-        "aspect-square h-auto w-full text-2xl md:text-3xl font-bold flex flex-col items-center justify-center p-2 shadow-md hover:shadow-lg transition-all duration-200",
-        isRevealed ? "opacity-50 cursor-not-allowed" : "hover:scale-105 hover:bg-primary/90",
-        isRevealed && tile.answeredCorrectly === true && "bg-green-500/30 hover:bg-green-500/30",
-        isRevealed && tile.answeredCorrectly === false && "bg-red-500/30 hover:bg-red-500/30",
+        "aspect-[3/4] sm:aspect-square h-auto w-full text-3xl md:text-4xl lg:text-5xl font-bold flex flex-col items-center justify-center p-2 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg",
+        isRevealed 
+          ? "opacity-70 cursor-not-allowed" 
+          : "bg-tile-default text-tile-default-foreground hover:opacity-90 hover:scale-105",
+        isRevealed && tile.answeredCorrectly === true && "bg-tile-revealed-correct text-green-700",
+        isRevealed && tile.answeredCorrectly === false && "bg-tile-revealed-incorrect text-red-700",
+        isRevealed && tile.answeredCorrectly === null && "bg-tile-revealed-muted text-muted-foreground",
       )}
       onClick={onClick}
       disabled={isRevealed}
@@ -30,13 +34,14 @@ export default function QuestionTile({ tile, onClick }: QuestionTileProps) {
         <>
          {tile.answeredCorrectly === true && <CheckSquare size={40} className="text-green-700" />}
          {tile.answeredCorrectly === false && <EyeOff size={40} className="text-red-700" />}
-         {tile.answeredCorrectly === null && <HelpCircle size={40} className="text-muted-foreground" />}
+         {/* For tiles revealed but not yet adjudicated (e.g. game ended early), or if not tracked */}
+         {tile.answeredCorrectly === null && <HelpCircle size={40} className="text-slate-500" />} 
          <span className="text-sm mt-1 text-muted-foreground">{question.points} pts</span>
         </>
       ) : (
         <>
           <span>{displayNumber}</span>
-          <span className="text-sm mt-1 font-normal">{question.points} pts</span>
+          {/* Points removed from unrevealed tile to match image */}
         </>
       )}
     </Button>

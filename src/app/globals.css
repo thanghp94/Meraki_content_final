@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -30,8 +31,22 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
+    /* New colors based on image */
+    --game-header-background: 40 95% 75%; /* Warm yellow-orange */
+    --game-header-foreground: 30 70% 25%; /* Dark brown/orange for text */
+    --current-team-highlight-background: 330 90% 70%; /* Vibrant pink */
+    --current-team-highlight-foreground: 0 0% 100%;   /* White */
+    --tile-default-background: 210 80% 55%; /* Main tile blue */
+    --tile-default-foreground: 0 0% 100%; /* White */
+    --tile-secondary-background: 205 75% 65%; /* Lighter tile blue for variation if needed */
+    --grid-background: 0 0% 100%; /* White */
+    --tile-revealed-correct-background: 120 60% 88%; /* Lighter green */
+    --tile-revealed-incorrect-background: 0 70% 90%; /* Lighter red */
+    --tile-revealed-muted-background: 0 0% 90%; /* Lighter gray */
+
+
     /* Sidebar colors (can be adjusted if a sidebar is used) */
-    --sidebar-background: 217 91% 92%; 
+    --sidebar-background: 217 91% 92%;
     --sidebar-foreground: 217 50% 25%;
     --sidebar-primary: 217 89% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -63,6 +78,20 @@
     --input: 217 30% 28%;
     --ring: 217 89% 60%;
 
+     /* New dark theme colors based on image (adjust as needed) */
+    --game-header-background: 40 70% 30%;
+    --game-header-foreground: 40 90% 85%;
+    --current-team-highlight-background: 330 70% 40%;
+    --current-team-highlight-foreground: 0 0% 95%;
+    --tile-default-background: 210 70% 35%;
+    --tile-default-foreground: 0 0% 95%;
+    --tile-secondary-background: 205 65% 45%;
+    --grid-background: 217 30% 15%;
+    --tile-revealed-correct-background: 120 50% 30%;
+    --tile-revealed-incorrect-background: 0 60% 35%;
+    --tile-revealed-muted-background: 0 0% 25%;
+
+
     --sidebar-background: 217 30% 12%;
     --sidebar-foreground: 217 91% 95%;
     --sidebar-primary: 217 89% 60%;
@@ -82,4 +111,47 @@
     @apply bg-background text-foreground;
     /* font-family removed to allow Geist from layout.tsx to take precedence */
   }
+}
+
+/* Custom class for the game header background */
+.bg-game-header {
+  background-color: hsl(var(--game-header-background));
+  color: hsl(var(--game-header-foreground));
+}
+.text-game-header-foreground {
+  color: hsl(var(--game-header-foreground));
+}
+
+/* Custom class for current team highlight */
+.bg-current-team-highlight {
+  background-color: hsl(var(--current-team-highlight-background));
+  color: hsl(var(--current-team-highlight-foreground));
+}
+.text-current-team-highlight-foreground {
+  color: hsl(var(--current-team-highlight-foreground));
+}
+
+/* Custom class for tile default */
+.bg-tile-default {
+  background-color: hsl(var(--tile-default-background));
+  color: hsl(var(--tile-default-foreground));
+}
+.text-tile-default-foreground {
+  color: hsl(var(--tile-default-foreground));
+}
+
+.bg-tile-revealed-correct {
+  background-color: hsl(var(--tile-revealed-correct-background)) !important;
+}
+.bg-tile-revealed-incorrect {
+  background-color: hsl(var(--tile-revealed-incorrect-background)) !important;
+}
+.bg-tile-revealed-muted {
+  background-color: hsl(var(--tile-revealed-muted-background)) !important;
+}
+
+
+/* Custom class for grid background */
+.bg-grid-area {
+  background-color: hsl(var(--grid-background));
 }

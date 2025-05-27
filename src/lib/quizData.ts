@@ -69,8 +69,26 @@ export const TOPICS: Topic[] = [
     name: 'Basic Math Review',
     questions: mathQuestions.slice(0, 24),
   },
+   {
+    id: 'general-knowledge-15',
+    name: 'General Knowledge (15 Qs)',
+    // Create 15 unique questions for this topic
+    questions: Array.from({ length: 15 }, (_, i) => ({
+      id: `gk15_q${i + 1}`,
+      questionText: `General Knowledge Question ${i + 1}: What is the capital of...?`,
+      answerText: `Answer for GK Question ${i + 1}`,
+      points: 10 + ((i % 5) * 5), // 10, 15, 20, 25, 30
+      ...(i % 4 === 0 && { // Add media to some questions
+        media: {
+          url: `https://placehold.co/${600 + i*10}x${400 + i*5}.png`,
+          type: 'image' as 'image',
+          alt: `Placeholder for GK Q${i+1}`,
+        }
+      }),
+    }))
+  }
 ];
 
-export const GRID_SIZES = [8, 16, 24];
+export const GRID_SIZES = [8, 15, 16, 24]; // Added 15
 export const MIN_TEAMS = 2;
 export const MAX_TEAMS = 6;

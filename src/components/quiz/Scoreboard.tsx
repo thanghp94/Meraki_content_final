@@ -1,4 +1,10 @@
+
 'use client';
+
+// This component is no longer used directly in the game page.
+// It's replaced by HorizontalTeamDisplay.tsx.
+// Keeping the file for now in case it's used elsewhere or as a reference,
+// but it can be deleted if confirmed unused.
 
 import type { Team } from '@/types/quiz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

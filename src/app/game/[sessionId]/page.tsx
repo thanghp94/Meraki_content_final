@@ -4,14 +4,14 @@
 import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useGame } from '@/contexts/GameContext';
-import Scoreboard from '@/components/quiz/Scoreboard';
 import GameGrid from '@/components/quiz/GameGrid';
 import QuestionModal from '@/components/quiz/QuestionModal';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Award, CheckCircle, Info, Play } from 'lucide-react';
+import { Award, Info, Play } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import HorizontalTeamDisplay from '@/components/quiz/HorizontalTeamDisplay'; // New component
 
 export default function GamePage() {
   const router = useRouter();
@@ -78,35 +78,24 @@ export default function GamePage() {
     );
   }
 
-
   return (
-    <div className="flex flex-col h-full space-y-4">
-      {/* Top Section: Topic & Current Turn */}
-      <div className="flex-shrink-0 text-center">
-        <h2 className="text-2xl font-semibold mb-1 md:mb-2">Topic: {topic.name}</h2>
-        <Alert className="bg-primary text-primary-foreground shadow-md max-w-md mx-auto">
-          <CheckCircle className="h-5 w-5 text-primary-foreground" />
-          <AlertTitle className="text-lg md:text-xl font-bold">
-            {currentTeam ? `${currentTeam.name}'s Turn` : "Loading..."}
-          </AlertTitle>
-        </Alert>
-      </div>
+    <div className="flex flex-col h-full max-h-screen overflow-hidden">
+      {/* Top Section: Horizontal Team Display */}
+      <HorizontalTeamDisplay 
+        teams={teams} 
+        currentTeamId={currentTeam?.id} 
+        onEndGame={endGame}
+        topicName={topic.name}
+      />
       
       {/* Middle Section: Game Grid (dominant) */}
-      <div className="flex-grow flex items-center justify-center min-h-0 py-2">
-        <div className="w-full h-full max-w-4xl p-1"> {/* Grid container */}
+      <div className="flex-grow flex items-center justify-center min-h-0 p-2 sm:p-4 bg-background"> {/* Grid container with padding */}
+        <div className="w-full h-full max-w-5xl"> {/* Max width for the grid itself */}
           <GameGrid /> 
         </div>
       </div>
 
-      {/* Bottom Section: Scoreboard & End Game Button */}
-      <div className="flex-shrink-0 space-y-3 md:space-y-4">
-        <Scoreboard teams={teams} currentTeamId={currentTeam?.id} />
-        <div className="text-center pb-2">
-          <Button variant="destructive" size="sm" onClick={endGame}>End Game Early</Button>
-        </div>
-      </div>
-
+      {/* Question Modal */}
       <QuestionModal />
     </div>
   );
