@@ -9,6 +9,7 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { FolderPlus, Gamepad2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Header from '@/components/Header'; // Import the general Header
 
 export default function LibraryPage() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function LibraryPage() {
   }, [allItems, activeFilter, searchTerm]);
 
   const handleCreateGame = () => {
-    router.push('/setup');
+    router.push('/make-game'); // Updated to navigate to make-game
   };
 
   const handleCreateFolder = () => {
@@ -47,14 +48,15 @@ export default function LibraryPage() {
 
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Top "MY FOLDERS" bar */}
+    <div className="flex flex-col h-full min-h-screen">
+      <Header /> {/* Add the general app header */}
+      {/* Top "MY FOLDERS" bar specific to this page */}
       <header className="bg-library-header text-library-header-foreground py-6 px-4 sm:px-8 text-center shadow-md">
         <h1 className="text-3xl font-bold">MY FOLDERS</h1>
         <p className="text-sm">Organize your games</p>
       </header>
 
-      <div className="flex-grow flex flex-col md:flex-row p-4 sm:p-6 gap-4 sm:gap-6">
+      <div className="flex-grow flex flex-col md:flex-row p-4 sm:p-6 gap-4 sm:gap-6 container mx-auto">
         <LibrarySidebar 
           className="w-full md:w-72 lg:w-80 flex-shrink-0"
           onSearch={setSearchTerm}

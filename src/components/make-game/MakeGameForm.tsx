@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Camera, FileUp, Globe, Image as ImageIcon, Lock, Save, Users, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid'; // For generating a mock game ID
 
 // Mock languages for the dropdown
 const languages = [
@@ -38,9 +39,13 @@ export default function MakeGameForm() {
       toast({ title: 'Title Required', description: 'Please enter a title for your game.', variant: 'destructive' });
       return;
     }
-    console.log({ title, description, language, tags, visibility, imageUrl });
-    toast({ title: 'Game Saved (Mock)', description: 'Your game settings have been logged.' });
-    // router.push('/library'); // Navigate to library or game page after save
+    const gameData = { title, description, language, tags, visibility, imageUrl };
+    console.log("Game Data Submitted:", gameData);
+    toast({ title: 'Game Created!', description: `${title} has been created. Now add some questions.` });
+    
+    // In a real app, you would save the game to a backend and get a real ID.
+    const mockGameId = uuidv4(); 
+    router.push(`/edit-game/${mockGameId}?name=${encodeURIComponent(title)}`); 
   };
 
   const handleCancel = () => {
