@@ -10,15 +10,15 @@ interface HorizontalTeamDisplayProps {
   teams: Team[];
   currentTeamId?: string | null;
   onEndGame: () => void;
-  topicName: string;
+  // topicName: string; // Removed
 }
 
-export default function HorizontalTeamDisplay({ teams, currentTeamId, onEndGame, topicName }: HorizontalTeamDisplayProps) {
+export default function HorizontalTeamDisplay({ teams, currentTeamId, onEndGame }: HorizontalTeamDisplayProps) {
   return (
     <div className="bg-game-header text-game-header-foreground p-3 shadow-md w-full">
       <div className="container mx-auto flex items-center justify-between gap-4">
-        {/* Teams Display - takes up most of the space */}
-        <div className="flex items-center space-x-3 sm:space-x-4 overflow-x-auto flex-grow">
+        {/* Teams Display - takes up most of the space and centers its content */}
+        <div className="flex items-center justify-center space-x-3 sm:space-x-4 overflow-x-auto flex-grow">
           {teams.map((team) => (
             <div
               key={team.id}
@@ -41,14 +41,9 @@ export default function HorizontalTeamDisplay({ teams, currentTeamId, onEndGame,
           ))}
         </div>
 
-        {/* Topic Name and End Game Button - on the right, takes less space */}
-        <div className="flex items-center space-x-2 flex-shrink-0">
-            <span 
-              className="text-xs sm:text-sm font-medium hidden md:block truncate max-w-[150px] lg:max-w-[250px] opacity-75" 
-              title={topicName}
-            >
-              {topicName}
-            </span>
+        {/* End Game Button - on the right */}
+        <div className="flex items-center flex-shrink-0">
+            {/* Topic Name span removed */}
             <Button
                 variant="ghost"
                 size="icon"

@@ -45,7 +45,7 @@ export default function GamePage() {
     );
   }
   
-  const { teams, currentTeamTurnIndex, status, topic } = gameState;
+  const { teams, currentTeamTurnIndex, status } = gameState; // Removed topic from here as it's not directly used in this component's render logic anymore for the header
   const currentTeam = teams[currentTeamTurnIndex];
 
   if (status === 'finished') {
@@ -56,7 +56,7 @@ export default function GamePage() {
           <CardHeader className="text-center">
             <Award size={64} className="mx-auto text-primary" />
             <CardTitle className="text-3xl font-bold mt-4">Game Over!</CardTitle>
-            <CardDescription className="text-lg">Final Scores for "{topic.name}"</CardDescription>
+            <CardDescription className="text-lg">Final Scores for "{gameState.topic.name}"</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {sortedTeams.map((team, index) => (
@@ -91,7 +91,7 @@ export default function GamePage() {
         teams={teams} 
         currentTeamId={currentTeam?.id} 
         onEndGame={endGame}
-        topicName={topic.name}
+        // topicName={gameState.topic.name} // Removed
       />
       
       <div className="flex-grow flex items-center justify-center min-h-0 p-2 sm:p-4 bg-background">
