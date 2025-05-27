@@ -5,17 +5,18 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
-  Search, Folder as FolderIcon, Gamepad2, Heart, Users, History, Trash2, Sparkles, ArrowDownAZ, FolderPlus, AlignJustify 
-} from 'lucide-react';
+  Search, Folder as FolderIcon, Gamepad2, Heart, Users, History, Trash2, Sparkles, ArrowDownAZ, FolderPlus 
+} from 'lucide-react'; // Removed AlignJustify as it's not used
 import { cn } from '@/lib/utils';
 
 interface LibrarySidebarProps {
   className?: string;
   onSearch: (term: string) => void;
   activeFilter: 'all' | 'folders' | 'games';
-  onFilterChange: (filter: 'all' | 'folders' | 'games')
-    | (() => void) // For Likes, Following etc. which are not implemented yet
-    | ((filter: 'likes' | 'following' | 'history' | 'deleted') => void); // Type expanded for future
+  onFilterChange: 
+    ((filter: 'all' | 'folders' | 'games') => void) |
+    (() => void) | // For Likes, Following etc. placeholder
+    ((filter: 'likes' | 'following' | 'history' | 'deleted') => void); // Type expanded for future placeholders
   onNewGame: () => void;
   onNewFolder: () => void;
   folderCount: number;
@@ -23,6 +24,7 @@ interface LibrarySidebarProps {
 
 type NavItemKey = 'all' | 'games' | 'folders' | 'likes' | 'following';
 
+// Matched to image: "Games", "Folders", "Likes", "Following"
 const navItems: { key: NavItemKey; label: string; icon: React.ElementType }[] = [
   { key: 'games', label: 'Games', icon: Gamepad2 },
   { key: 'folders', label: 'Folders', icon: FolderIcon },
@@ -30,9 +32,10 @@ const navItems: { key: NavItemKey; label: string; icon: React.ElementType }[] = 
   { key: 'following', label: 'Following', icon: Users },
 ];
 
+// Matched to image: "New", "Old", "Edited", "A-Z"
 const filterButtons = [
   { label: 'New', icon: Sparkles },
-  { label: 'Old' },
+  { label: 'Old' }, // No icon in image for "Old" or "Edited"
   { label: 'Edited' },
   { label: 'A-Z', icon: ArrowDownAZ },
 ];
@@ -47,9 +50,16 @@ export default function LibrarySidebar({
     onSearch(searchTerm);
   };
   
-  // Cast onFilterChange for specific nav items
-  const handleNavFilterChange = (filter: 'all' | 'folders' | 'games') => {
-    (onFilterChange as (filter: 'all' | 'folders' | 'games') => void)(filter);
+  const handleNavFilterChange = (filterKey: NavItemKey) => {
+    if (filterKey === 'all' || filterKey === 'folders' || filterKey === 'games') {
+      // This cast aligns with the first part of the union type for onFilterChange
+      (onFilterChange as (filter: 'all' | 'folders' | 'games') => void)(filterKey);
+    } else {
+      // For 'likes', 'following', which are placeholders for now
+      // This cast aligns with the second or third part of the union type (using a more specific one for clarity)
+      (onFilterChange as (filter: 'likes' | 'following' | 'history' | 'deleted') => void)(filterKey as 'likes' | 'following');
+      alert(`${navItems.find(item => item.key === filterKey)?.label} clicked - TBI`);
+    }
   };
 
   return (
@@ -62,7 +72,7 @@ export default function LibrarySidebar({
       <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
         <Input
           type="search"
-          placeholder="Search my folders"
+          placeholder="Search my folders" // Matches image
           className="flex-grow"
           value={searchTerm}
           onChange={(e) => {
@@ -75,10 +85,17 @@ export default function LibrarySidebar({
         </Button>
       </form>
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground space-x-2">
+      {/* Filter buttons like "New", "Old", "Edited", "A-Z" from image */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground space-x-1 sm:space-x-2">
         {filterButtons.map(fb => (
-          <Button key={fb.label} variant="ghost" size="sm" className="flex-1 justify-start px-2" onClick={() => alert(`${fb.label} filter clicked - TBI`)}>
-            {fb.icon && <fb.icon className="mr-1.5 h-3.5 w-3.5" />}
+          <Button 
+            key={fb.label} 
+            variant="ghost" 
+            size="sm" 
+            className="flex-1 justify-start px-1 sm:px-2 text-xs sm:text-sm" 
+            onClick={() => alert(`${fb.label} filter clicked - TBI`)}
+          >
+            {fb.icon && <fb.icon className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-3.5 sm:w-3.5" />}
             {fb.label}
           </Button>
         ))}
@@ -88,21 +105,14 @@ export default function LibrarySidebar({
         {navItems.map(item => (
           <Button
             key={item.key}
-            variant={activeFilter === item.key ? 'default' : 'ghost'}
+            variant={'ghost'} // Default to ghost, active state handled by cn
             className={cn(
               "w-full justify-start text-base py-3",
               activeFilter === item.key && item.key === 'folders' && "bg-library-sidebar-active text-library-sidebar-active-foreground hover:bg-library-sidebar-active/90",
-              activeFilter === item.key && item.key !== 'folders' && "bg-primary text-primary-foreground hover:bg-primary/90"
+              activeFilter === item.key && item.key !== 'folders' && "bg-primary text-primary-foreground hover:bg-primary/90",
+              activeFilter !== item.key && "hover:bg-accent/50" // Standard hover for non-active
             )}
-            onClick={() => {
-              if (item.key === 'all' || item.key === 'folders' || item.key === 'games') {
-                handleNavFilterChange(item.key);
-              } else {
-                 // For Likes, Following - Cast to the broader type or handle appropriately
-                 (onFilterChange as (filter: 'likes' | 'following' | 'history' | 'deleted') => void)(item.key as 'likes' | 'following');
-                 alert(`${item.label} clicked - TBI`);
-              }
-            }}
+            onClick={() => handleNavFilterChange(item.key)}
           >
             <item.icon className="mr-3 h-5 w-5" />
             {item.label}
@@ -119,10 +129,11 @@ export default function LibrarySidebar({
          </Button>
       </div>
 
+      {/* Action buttons "+ Game" and "Folder" at the bottom */}
       <div className="mt-auto pt-4 border-t space-y-2">
         <Button 
           size="lg" 
-          className="w-full bg-teal-500 hover:bg-teal-600 text-white text-base"
+          className="w-full bg-library-action-button text-library-action-button-foreground hover:bg-library-action-button/90 text-base"
           onClick={onNewGame}
         >
           <Gamepad2 className="mr-2 h-5 w-5" /> + Game
@@ -130,7 +141,7 @@ export default function LibrarySidebar({
         <Button 
           variant="outline" 
           size="lg" 
-          className="w-full border-teal-500 text-teal-500 hover:bg-teal-500/10 text-base"
+          className="w-full border-[hsl(var(--library-action-button-background))] text-[hsl(var(--library-action-button-background))] hover:bg-[hsla(var(--library-action-button-background),0.1)] text-base"
           onClick={onNewFolder}
         >
           <FolderPlus className="mr-2 h-5 w-5" /> Folder
