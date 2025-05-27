@@ -59,10 +59,7 @@ export default function QuestionModal() {
     <Dialog open={!!activeQuestion} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent className="sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl bg-card shadow-2xl rounded-lg p-0">
         <DialogHeader className="bg-primary text-primary-foreground p-4 rounded-t-lg flex justify-center items-center relative">
-          {/* The actual X close button is rendered by DialogContent's default structure in its top-right corner, overlaying this header. */}
           <DialogTitle className="text-4xl font-bold">{activeQuestion.points}</DialogTitle>
-          {/* Displaying tile number subtly if needed, or remove if points are enough */}
-          {/* <span className="absolute left-4 text-sm opacity-75">Tile {tile?.displayNumber}</span> */}
         </DialogHeader>
         
         <div className="p-6 space-y-6 flex flex-col items-center">
@@ -75,14 +72,14 @@ export default function QuestionModal() {
                 src={media.url}
                 alt={media.alt || "Question related media"}
                 layout="fill"
-                objectFit="contain" // Changed to contain to show full image, adjust if crop is better
+                objectFit="contain" 
                 priority={true} 
               />
             </div>
           )}
           {/* TODO: Add video support here if media.type === 'video' */}
 
-          <DialogDescription className="text-3xl md:text-4xl font-bold text-foreground text-center min-h-[60px] my-6">
+          <DialogDescription className="text-3xl md:text-4xl font-bold text-foreground text-center my-6">
             {activeQuestion.questionText}
           </DialogDescription>
 
@@ -92,7 +89,12 @@ export default function QuestionModal() {
             </Button>
           )}
 
-          {/* Removed the display of the correct answer text */}
+          {/* Display the answer in a styled box when showAnswer is true */}
+          {showAnswer && activeQuestion.answerText && (
+            <div className="w-full max-w-2xl p-6 my-6 border border-border rounded-xl bg-card shadow-lg text-center">
+              <p className="text-2xl md:text-3xl font-semibold text-primary">{activeQuestion.answerText}</p>
+            </div>
+          )}
           
         </div>
 
