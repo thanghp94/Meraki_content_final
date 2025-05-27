@@ -8,6 +8,20 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
 import Image from 'next/image'; // Import next/image
 
+// Helper function to play sound
+const playSound = (soundFile: string) => {
+  try {
+    const audio = new Audio(soundFile);
+    audio.play().catch(error => {
+      // Autoplay was prevented or another error occurred
+      // console.warn(`Could not play sound ${soundFile}:`, error);
+      // You might want to inform the user that interaction is needed to enable sound
+    });
+  } catch (error) {
+    // console.error(`Error playing sound ${soundFile}:`, error);
+  }
+};
+
 export default function QuestionModal() {
   const { gameState, adjudicateAnswer, closeQuestionModal } = useGame();
   const [showAnswer, setShowAnswer] = useState(false);
@@ -21,11 +35,17 @@ export default function QuestionModal() {
   const media = activeQuestion?.media;
 
   const handleAdjudication = (isCorrect: boolean) => {
+    if (isCorrect) {
+      playSound('/sounds/correct.mp3');
+    } else {
+      playSound('/sounds/incorrect.mp3');
+    }
     adjudicateAnswer(isCorrect);
     setShowAnswer(false); // Reset for next question
   };
 
   const handleShowAnswer = () => {
+    playSound('/sounds/reveal.mp3');
     setShowAnswer(true);
   };
   
