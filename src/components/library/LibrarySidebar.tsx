@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
   Search, Folder as FolderIcon, Gamepad2, Heart, Users, History, Trash2, Sparkles, ArrowDownAZ, FolderPlus 
-} from 'lucide-react'; // Removed AlignJustify as it's not used
+} from 'lucide-react'; 
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 interface LibrarySidebarProps {
   className?: string;
@@ -15,16 +16,14 @@ interface LibrarySidebarProps {
   activeFilter: 'all' | 'folders' | 'games';
   onFilterChange: 
     ((filter: 'all' | 'folders' | 'games') => void) |
-    (() => void) | // For Likes, Following etc. placeholder
-    ((filter: 'likes' | 'following' | 'history' | 'deleted') => void); // Type expanded for future placeholders
-  onNewGame: () => void;
+    ((filter: 'likes' | 'following' | 'history' | 'deleted') => void);
+  onNewGame: () => void; // Kept for consistency, but will be overridden by direct navigation
   onNewFolder: () => void;
   folderCount: number;
 }
 
 type NavItemKey = 'all' | 'games' | 'folders' | 'likes' | 'following';
 
-// Matched to image: "Games", "Folders", "Likes", "Following"
 const navItems: { key: NavItemKey; label: string; icon: React.ElementType }[] = [
   { key: 'games', label: 'Games', icon: Gamepad2 },
   { key: 'folders', label: 'Folders', icon: FolderIcon },
@@ -32,18 +31,18 @@ const navItems: { key: NavItemKey; label: string; icon: React.ElementType }[] = 
   { key: 'following', label: 'Following', icon: Users },
 ];
 
-// Matched to image: "New", "Old", "Edited", "A-Z"
 const filterButtons = [
   { label: 'New', icon: Sparkles },
-  { label: 'Old' }, // No icon in image for "Old" or "Edited"
+  { label: 'Old' }, 
   { label: 'Edited' },
   { label: 'A-Z', icon: ArrowDownAZ },
 ];
 
 export default function LibrarySidebar({ 
-  className, onSearch, activeFilter, onFilterChange, onNewGame, onNewFolder, folderCount
+  className, onSearch, activeFilter, onFilterChange, onNewFolder, folderCount
 }: LibrarySidebarProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter(); // Initialize router
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,14 +51,15 @@ export default function LibrarySidebar({
   
   const handleNavFilterChange = (filterKey: NavItemKey) => {
     if (filterKey === 'all' || filterKey === 'folders' || filterKey === 'games') {
-      // This cast aligns with the first part of the union type for onFilterChange
       (onFilterChange as (filter: 'all' | 'folders' | 'games') => void)(filterKey);
     } else {
-      // For 'likes', 'following', which are placeholders for now
-      // This cast aligns with the second or third part of the union type (using a more specific one for clarity)
       (onFilterChange as (filter: 'likes' | 'following' | 'history' | 'deleted') => void)(filterKey as 'likes' | 'following');
       alert(`${navItems.find(item => item.key === filterKey)?.label} clicked - TBI`);
     }
+  };
+
+  const handleCreateGame = () => {
+    router.push('/make-game'); // Navigate to the new make-game page
   };
 
   return (
@@ -72,12 +72,12 @@ export default function LibrarySidebar({
       <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
         <Input
           type="search"
-          placeholder="Search my folders" // Matches image
+          placeholder="Search my folders"
           className="flex-grow"
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
-            if(!e.target.value) onSearch(''); // Clear search on empty
+            if(!e.target.value) onSearch('');
           }}
         />
         <Button type="submit" size="icon" variant="outline">
@@ -85,7 +85,6 @@ export default function LibrarySidebar({
         </Button>
       </form>
 
-      {/* Filter buttons like "New", "Old", "Edited", "A-Z" from image */}
       <div className="flex items-center justify-between text-sm text-muted-foreground space-x-1 sm:space-x-2">
         {filterButtons.map(fb => (
           <Button 
@@ -105,12 +104,12 @@ export default function LibrarySidebar({
         {navItems.map(item => (
           <Button
             key={item.key}
-            variant={'ghost'} // Default to ghost, active state handled by cn
+            variant={'ghost'}
             className={cn(
               "w-full justify-start text-base py-3",
               activeFilter === item.key && item.key === 'folders' && "bg-library-sidebar-active text-library-sidebar-active-foreground hover:bg-library-sidebar-active/90",
               activeFilter === item.key && item.key !== 'folders' && "bg-primary text-primary-foreground hover:bg-primary/90",
-              activeFilter !== item.key && "hover:bg-accent/50" // Standard hover for non-active
+              activeFilter !== item.key && "hover:bg-accent/50"
             )}
             onClick={() => handleNavFilterChange(item.key)}
           >
@@ -129,12 +128,11 @@ export default function LibrarySidebar({
          </Button>
       </div>
 
-      {/* Action buttons "+ Game" and "Folder" at the bottom */}
       <div className="mt-auto pt-4 border-t space-y-2">
         <Button 
           size="lg" 
           className="w-full bg-library-action-button text-library-action-button-foreground hover:bg-library-action-button/90 text-base"
-          onClick={onNewGame}
+          onClick={handleCreateGame} // Updated to use the new handler
         >
           <Gamepad2 className="mr-2 h-5 w-5" /> + Game
         </Button>
@@ -150,3 +148,4 @@ export default function LibrarySidebar({
     </aside>
   );
 }
+
