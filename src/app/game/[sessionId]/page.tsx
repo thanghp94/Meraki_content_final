@@ -11,7 +11,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Award, Info, Play } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import HorizontalTeamDisplay from '@/components/quiz/HorizontalTeamDisplay'; // New component
+import HorizontalTeamDisplay from '@/components/quiz/HorizontalTeamDisplay';
+import { cn } from '@/lib/utils';
 
 export default function GamePage() {
   const router = useRouter();
@@ -27,8 +28,8 @@ export default function GamePage() {
 
   if (!gameState || gameState.sessionId !== sessionId) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-         <Alert variant="destructive" className="max-w-md text-center">
+      <div className="flex flex-col items-center justify-center h-full py-12">
+         <Alert variant="destructive" className="max-w-md text-center mb-6">
           <Info className="h-4 w-4" />
           <AlertTitle>Game Not Found</AlertTitle>
           <AlertDescription>
@@ -59,13 +60,19 @@ export default function GamePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {sortedTeams.map((team, index) => (
-              <div key={team.id} className={`p-4 rounded-lg flex justify-between items-center ${index === 0 ? 'bg-accent text-accent-foreground' : 'bg-secondary'}`}>
+              <div 
+                key={team.id} 
+                className={cn(
+                  "p-4 rounded-lg flex justify-between items-center",
+                  index === 0 ? "bg-accent text-accent-foreground" : "bg-secondary"
+                )}
+              >
                 <span className="font-semibold text-lg">{index + 1}. {team.name} {index === 0 ? '🏆' : ''}</span>
                 <span className="font-bold text-xl">{team.score} points</span>
               </div>
             ))}
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
+          <CardFooter className="flex flex-col space-y-4 pt-6">
              <Button onClick={() => router.push('/setup')} className="w-full">
               Play Again
             </Button>
@@ -79,8 +86,7 @@ export default function GamePage() {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-screen overflow-hidden">
-      {/* Top Section: Horizontal Team Display */}
+    <div className="flex flex-col h-full max-h-[calc(100vh-var(--header-height,4rem))] overflow-hidden">
       <HorizontalTeamDisplay 
         teams={teams} 
         currentTeamId={currentTeam?.id} 
@@ -88,14 +94,12 @@ export default function GamePage() {
         topicName={topic.name}
       />
       
-      {/* Middle Section: Game Grid (dominant) */}
-      <div className="flex-grow flex items-center justify-center min-h-0 p-2 sm:p-4 bg-background"> {/* Grid container with padding */}
-        <div className="w-full h-full max-w-5xl"> {/* Max width for the grid itself */}
+      <div className="flex-grow flex items-center justify-center min-h-0 p-2 sm:p-4 bg-background">
+        <div className="w-full h-full max-w-5xl">
           <GameGrid /> 
         </div>
       </div>
 
-      {/* Question Modal */}
       <QuestionModal />
     </div>
   );

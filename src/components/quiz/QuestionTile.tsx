@@ -16,31 +16,31 @@ export default function QuestionTile({ tile, onClick }: QuestionTileProps) {
 
   return (
     <Button
-      variant="default" // Use default and override with custom classes
+      variant="default" 
       className={cn(
         "aspect-[3/4] sm:aspect-square h-auto w-full text-3xl md:text-4xl lg:text-5xl font-bold flex flex-col items-center justify-center p-2 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg",
-        isRevealed 
-          ? "opacity-70 cursor-not-allowed" 
-          : "bg-tile-default text-tile-default-foreground hover:opacity-90 hover:scale-105",
-        isRevealed && tile.answeredCorrectly === true && "bg-tile-revealed-correct text-green-700",
-        isRevealed && tile.answeredCorrectly === false && "bg-tile-revealed-incorrect text-red-700",
-        isRevealed && tile.answeredCorrectly === null && "bg-tile-revealed-muted text-muted-foreground",
+        // Base styles for unrevealed tiles
+        !isRevealed && "bg-tile-default text-tile-default-foreground hover:opacity-90 hover:scale-105",
+        // Styles for revealed tiles
+        isRevealed && "opacity-80 cursor-not-allowed", // General revealed style
+        isRevealed && tile.answeredCorrectly === true && "bg-tile-revealed-correct text-green-800 dark:text-green-300",
+        isRevealed && tile.answeredCorrectly === false && "bg-tile-revealed-incorrect text-red-800 dark:text-red-300",
+        isRevealed && tile.answeredCorrectly === null && "bg-tile-revealed-muted text-gray-600 dark:text-gray-400",
       )}
       onClick={onClick}
       disabled={isRevealed}
-      aria-label={isRevealed ? `Question ${displayNumber} (revealed)` : `Select question ${displayNumber}`}
+      aria-label={isRevealed ? `Question ${displayNumber} (revealed, ${tile.answeredCorrectly === true ? 'correct' : tile.answeredCorrectly === false ? 'incorrect' : 'unanswered'}) - ${question.points} points` : `Select question ${displayNumber}`}
     >
       {isRevealed ? (
         <>
-         {tile.answeredCorrectly === true && <CheckSquare size={40} className="text-green-700" />}
-         {tile.answeredCorrectly === false && <EyeOff size={40} className="text-red-700" />}
-         {/* For tiles revealed but not yet adjudicated (e.g. game ended early), or if not tracked */}
-         {tile.answeredCorrectly === null && <HelpCircle size={40} className="text-slate-500" />} 
-         <span className="text-sm mt-1 text-muted-foreground">{question.points} pts</span>
+         {tile.answeredCorrectly === true && <CheckSquare size={40} className="text-inherit" />}
+         {tile.answeredCorrectly === false && <EyeOff size={40} className="text-inherit" />}
+         {tile.answeredCorrectly === null && <HelpCircle size={40} className="text-inherit" />} 
+         <span className="text-sm mt-1 font-normal text-muted-foreground">{question.points} pts</span>
         </>
       ) : (
         <>
-          <span>{displayNumber}</span>
+          <span className="drop-shadow-sm">{displayNumber}</span>
           {/* Points removed from unrevealed tile to match image */}
         </>
       )}
