@@ -7,7 +7,7 @@ export interface Question {
   media?: {
     url: string;
     type: 'image' | 'video' | 'gif'; // We'll primarily implement 'image'/'gif' display for now
-    alt: string;
+    alt?: string; // Made alt optional
   };
 }
 
@@ -51,3 +51,4 @@ export interface GameSetupConfig {
   teamNames: string[];
   gridSize: number;
 }
+

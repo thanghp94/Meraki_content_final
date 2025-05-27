@@ -5,37 +5,83 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea'; // Assuming you might want textarea for Q/A
+import { Textarea } from '@/components/ui/textarea'; 
 import { Card, CardContent } from '@/components/ui/card';
-import { FileUp, ImageIcon, Save, X } from 'lucide-react';
+import { FileUp, ImageIcon, Loader2, Save, X } from 'lucide-react'; // Added Loader2
 import { useState } from 'react';
+import type { Question } from '@/types/quiz'; // Import Question type
+import { addQuestionToGameInFirestore } from '@/lib/firebaseService'; // Import service
+import { useToast } from '@/hooks/use-toast';
 
 interface QuestionEditorFormProps {
-  onSave: () => void;
+  gameId: string; // Game ID is needed to save the question to the correct game
+  onSaveSuccess: () => void; // Callback after a question is successfully saved
   onClose: () => void;
-  questionsSavedCount: number;
+  questionsSavedCount: number; // To display on the save button
 }
 
 const pointsOptions = [5, 10, 15, 20, 25, 30, 50, 100];
 const imageOptions = [
   { value: 'none', label: 'No Image' },
   { value: 'question_image', label: 'Question with Image' },
-  { value: 'answer_image', label: 'Answer with Image' },
+  // { value: 'answer_image', label: 'Answer with Image' }, // Simplified for now
 ];
 
-export default function QuestionEditorForm({ onSave, onClose, questionsSavedCount }: QuestionEditorFormProps) {
-  const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
+export default function QuestionEditorForm({ gameId, onSaveSuccess, onClose, questionsSavedCount }: QuestionEditorFormProps) {
+  const [questionText, setQuestionText] = useState('');
+  const [answerText, setAnswerText] = useState('');
   const [points, setPoints] = useState('15');
   const [imageOption, setImageOption] = useState('none');
   const [imageUrl, setImageUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const clearForm = () => {
+    setQuestionText('');
+    setAnswerText('');
+    setPoints('15');
+    setImageOption('none');
+    setImageUrl('');
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add validation if needed
-    console.log({ question, answer, points, imageOption, imageUrl });
-    onSave(); 
-    // Optionally clear form here or handle state for adding multiple questions
+    if (!questionText.trim() || !answerText.trim()) {
+      toast({ title: "Missing Fields", description: "Please fill in both question and answer.", variant: "destructive" });
+      return;
+    }
+    if (!gameId) {
+      toast({ title: "Error", description: "Game ID is missing. Cannot save question.", variant: "destructive" });
+      return;
+    }
+
+    setIsLoading(true);
+
+    const questionData: Omit<Question, 'id'> = {
+      questionText,
+      answerText,
+      points: parseInt(points, 10),
+    };
+
+    if (imageOption !== 'none' && imageUrl.trim()) {
+      questionData.media = {
+        url: imageUrl.trim(),
+        type: 'image', // Assuming 'image' for now, could be 'gif' if URL suggests it
+        alt: questionText.substring(0, 50) || 'Question image', // Simple alt text
+      };
+    }
+
+    try {
+      await addQuestionToGameInFirestore(gameId, questionData);
+      toast({ title: "Question Saved!", description: "Your question has been added to the game." });
+      onSaveSuccess(); // Notify parent to update count or UI
+      clearForm(); // Clear form for next entry
+    } catch (error) {
+      console.error("Failed to save question:", error);
+      toast({ title: "Error Saving Question", description: (error as Error).message || "Could not save the question.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -50,14 +96,15 @@ export default function QuestionEditorForm({ onSave, onClose, questionsSavedCoun
                 <Textarea
                   id="question"
                   placeholder="Enter the question text"
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
+                  value={questionText}
+                  onChange={(e) => setQuestionText(e.target.value)}
                   className="mt-1 text-base min-h-[100px]"
+                  disabled={isLoading}
                 />
               </div>
               <div>
                 <Label htmlFor="points" className="text-base font-semibold">Points</Label>
-                <Select value={points} onValueChange={setPoints}>
+                <Select value={points} onValueChange={setPoints} disabled={isLoading}>
                   <SelectTrigger id="points" className="mt-1 text-base">
                     <SelectValue placeholder="Select points" />
                   </SelectTrigger>
@@ -72,7 +119,7 @@ export default function QuestionEditorForm({ onSave, onClose, questionsSavedCoun
               </div>
               <div>
                 <Label htmlFor="imageOptions" className="text-base font-semibold">Image options</Label>
-                <Select value={imageOption} onValueChange={setImageOption}>
+                <Select value={imageOption} onValueChange={setImageOption} disabled={isLoading}>
                   <SelectTrigger id="imageOptions" className="mt-1 text-base">
                     <SelectValue placeholder="Select image option" />
                   </SelectTrigger>
@@ -94,35 +141,38 @@ export default function QuestionEditorForm({ onSave, onClose, questionsSavedCoun
                 <Textarea
                   id="answer"
                   placeholder="Enter the answer text"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+                  value={answerText}
+                  onChange={(e) => setAnswerText(e.target.value)}
                   className="mt-1 text-base min-h-[100px]"
+                  disabled={isLoading}
                 />
               </div>
-              {(imageOption === 'question_image' || imageOption === 'answer_image') && (
+              {(imageOption === 'question_image') && ( // Simplified to only 'question_image' for now
                 <div>
-                  <Label className="text-base font-semibold">Image/GIF</Label>
-                  <p className="text-xs text-muted-foreground mb-2">Browse gifs, upload image or paste URL (0.25MB max)</p>
-                  <div className="flex flex-col sm:flex-row gap-2 mb-2">
-                    <Button 
-                      type="button" 
-                      variant="default" 
-                      className="bg-[hsl(var(--current-team-highlight-background))] hover:bg-[hsl(var(--current-team-highlight-background),0.9)] text-[hsl(var(--current-team-highlight-foreground))] flex-1"
-                      onClick={() => alert("Image Library TBI")}
-                    >
-                      <ImageIcon className="mr-2" /> Image Library
-                    </Button>
-                    <Button type="button" variant="outline" className="flex-1" onClick={() => alert("Choose File TBI")}>
-                      <FileUp className="mr-2" /> Choose File
-                    </Button>
-                  </div>
+                  <Label className="text-base font-semibold">Image/GIF URL</Label>
+                  <p className="text-xs text-muted-foreground mb-2">Paste URL. (e.g. https://placehold.co/600x400.png)</p>
                   <Input
                     type="url"
                     placeholder="http://example.com/image.jpeg"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     className="text-base"
+                    disabled={isLoading}
                   />
+                   <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                    <Button 
+                      type="button" 
+                      variant="default" 
+                      className="bg-[hsl(var(--current-team-highlight-background))] hover:bg-[hsl(var(--current-team-highlight-background),0.9)] text-[hsl(var(--current-team-highlight-foreground))] flex-1"
+                      onClick={() => alert("Image Library TBI")}
+                      disabled={isLoading}
+                    >
+                      <ImageIcon className="mr-2" /> Image Library
+                    </Button>
+                    <Button type="button" variant="outline" className="flex-1" onClick={() => alert("Choose File TBI")} disabled={isLoading}>
+                      <FileUp className="mr-2" /> Choose File
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -132,10 +182,12 @@ export default function QuestionEditorForm({ onSave, onClose, questionsSavedCoun
             <Button 
               type="submit" 
               className="text-base bg-[hsl(var(--library-action-button-background))] hover:bg-[hsl(var(--library-action-button-background),0.9)] text-[hsl(var(--library-action-button-foreground))]"
+              disabled={isLoading}
             >
-              <Save className="mr-2 h-4 w-4" /> Save {questionsSavedCount}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isLoading ? 'Saving...' : `Save ${questionsSavedCount > 0 ? `(${questionsSavedCount})` : ''}`}
             </Button>
-            <Button type="button" variant="outline" onClick={onClose} className="text-base">
+            <Button type="button" variant="outline" onClick={onClose} className="text-base" disabled={isLoading}>
               <X className="mr-2 h-4 w-4" /> Close
             </Button>
           </div>

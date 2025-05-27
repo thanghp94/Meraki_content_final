@@ -10,42 +10,43 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast'; // Added useToast import
+import { useToast } from '@/hooks/use-toast'; 
 
 export default function EditGamePage() {
   const params = useParams();
-  const gameId = params.gameId as string;
+  const gameId = params.gameId as string; // Now this is the actual Firestore gameId
   const [showAlert, setShowAlert] = useState(true);
   const [gameName, setGameName] = useState('Loading game...');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const { toast } = useToast(); // Initialized toast
+  const { toast } = useToast(); 
+
+  // State to track the number of questions saved for THIS session on this page.
+  // In a real app, you might fetch the actual count from Firestore initially.
+  const [questionsSavedThisSession, setQuestionsSavedThisSession] = useState(0);
 
   useEffect(() => {
-    // In a real app, you'd fetch game details based on gameId
-    // For now, we'll try to get the name from URL query params if available
     const queryParams = new URLSearchParams(window.location.search);
     const nameFromQuery = queryParams.get('name');
     if (nameFromQuery) {
       setGameName(decodeURIComponent(nameFromQuery));
     } else if (gameId) {
-      // Fallback if no query param, could be a generic name or fetched
+      // In a real app, you'd fetch game details (including name and questionCount) from Firestore using gameId
+      // For now, just use the ID.
       setGameName(`Game ID: ${gameId.substring(0, 8)}...`);
+      // Example: fetchGameDetails(gameId).then(details => setGameName(details.name));
     }
   }, [gameId]);
 
 
-  // Placeholder for questions count for the Save button
-  const [questionsCount, setQuestionsCount] = useState(0);
-
-  const handleSaveQuestion = () => {
-    // In a real app, this would save the question and update the count
-    setQuestionsCount(prev => prev + 1);
-    // Potentially clear form or load next question
+  const handleSaveQuestionSuccess = () => {
+    setQuestionsSavedThisSession(prev => prev + 1);
+    // Potentially fetch updated game details here if needed, or just update local count
   };
 
   const handleCloseQuestionEditor = () => {
-    // Logic for closing or clearing the question editor
-    console.log("Close question editor");
+    // Logic for closing or clearing the question editor if it were separate
+    // For now, the QuestionEditorForm has its own close/cancel logic
+    console.log("Close question editor action (if applicable outside form)");
   };
 
   const handleOpenImportModal = () => {
@@ -57,18 +58,23 @@ export default function EditGamePage() {
   };
 
   const handleImportQuestions = (text: string, delimiter: string) => {
-    console.log("Importing questions:", { text, delimiter });
-    // Here you would parse the text and create question objects
-    // For now, just log and show a toast
+    // This is where you would parse the 'text' based on 'delimiter'
+    // and then call 'addQuestionToGameInFirestore' for each parsed question.
+    // This will be a more complex loop.
+    console.log("Importing questions (logic TBD):", { text, delimiter, gameId });
+    
     const validLines = text.split('\n').filter(line => line.trim() !== '');
     const numLines = validLines.length;
 
+    // For now, just show a toast and update a mock count
     toast({
-      title: "Import Processed",
-      description: `Attempted to import ${numLines} question line(s) using "${delimiter}" as the delimiter. Actual parsing logic is TBD.`,
+      title: "Import Initiated (Not Implemented)",
+      description: `Would attempt to import ${numLines} question line(s) for game ${gameId}. Actual saving logic from import is TBD.`,
       duration: 5000,
     });
-    setQuestionsCount(prev => prev + numLines);
+    // This count update is temporary until import save is implemented
+    setQuestionsSavedThisSession(prev => prev + numLines); 
+    // setIsImportModalOpen(false); // Modal closes itself on import click
   };
 
 
@@ -81,7 +87,7 @@ export default function EditGamePage() {
           <Alert className="bg-primary/10 border-primary/30 text-primary relative">
             <AlertTitle className="font-semibold">New game made!</AlertTitle>
             <AlertDescription>
-              Now add some questions to it.
+              Now add some questions to it. You can add questions one by one using the form below, or import multiple questions.
             </AlertDescription>
             <Button
               variant="ghost"
@@ -97,11 +103,19 @@ export default function EditGamePage() {
 
         <ActionButtonsBar onOpenImportModal={handleOpenImportModal} />
 
-        <QuestionEditorForm 
-          onSave={handleSaveQuestion} 
-          onClose={handleCloseQuestionEditor} 
-          questionsSavedCount={questionsCount}
-        />
+        {gameId ? (
+          <QuestionEditorForm 
+            gameId={gameId}
+            onSaveSuccess={handleSaveQuestionSuccess} 
+            onClose={handleCloseQuestionEditor} 
+            questionsSavedCount={questionsSavedThisSession} // Display count of questions saved in this session
+          />
+        ) : (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>Game ID is missing. Cannot edit questions.</AlertDescription>
+          </Alert>
+        )}
       </main>
       <ImportQuestionsModal
         isOpen={isImportModalOpen}
