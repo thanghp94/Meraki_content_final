@@ -59,18 +59,18 @@ export default function ImportQuestionsModal({ isOpen, onClose, onImport }: Impo
         <DialogHeader>
           <DialogTitle className="text-2xl">Import Questions</DialogTitle>
           <DialogDescription>
-            Copy and paste from ChatGPT, Quizlet Export, Word, Excel, Google Docs, etc.
+            Paste questions from text files, spreadsheets, or other documents. Use one line per question.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-6">
           <Textarea
-            placeholder="Question1,Answer1\nQuestion2,Answer2\nQuestion3,Answer3" // Corrected placeholder
+            placeholder="Question1,Answer1,Points1 (optional),ImageURL1 (optional)\nQuestion2,Answer2,Points2 (optional)\nQuestion3,Answer3"
             value={text}
             onChange={(e) => setText(e.target.value)}
             className="min-h-[150px] text-sm"
           />
           <div>
-            <Label className="text-base font-semibold mb-2 block">Delimiter between question and answer:</Label>
+            <Label className="text-base font-semibold mb-2 block">Delimiter between question, answer, points, and image URL:</Label>
             <RadioGroup value={delimiterType} onValueChange={setDelimiterType} className="space-y-2">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="comma" id="comma" />
@@ -78,7 +78,7 @@ export default function ImportQuestionsModal({ isOpen, onClose, onImport }: Impo
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="tab" id="tab" />
-                <Label htmlFor="tab" className="font-normal">Tab</Label>
+                <Label htmlFor="tab" className="font-normal">Tab (often used when copying from Excel/Sheets)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="semicolon" id="semicolon" />
@@ -100,12 +100,14 @@ export default function ImportQuestionsModal({ isOpen, onClose, onImport }: Impo
             </RadioGroup>
           </div>
           <div>
-            <Label className="text-base font-semibold mb-1 block">Tips:</Label>
+            <Label className="text-base font-semibold mb-1 block">Tips for formatting:</Label>
             <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-              <li>No column headers.</li>
-              <li>Each line maps to a question.</li>
-              <li>If the delimiter is used in a question or answer, surround the item with double quotes: "My, question","My, answer".</li>
-              <li>The first answer in the multiple choice question must be the correct answer.</li>
+              <li>Each line should represent one question.</li>
+              <li>Format: `Question Text DELIMITER Answer Text DELIMITER Points (optional) DELIMITER Image URL (optional)`</li>
+              <li>If `Points` is omitted or invalid, a default value (e.g., 10) will be used.</li>
+              <li>If `Image URL` is omitted, no image will be associated with the question.</li>
+              <li>If your question, answer, or URL contains the delimiter character, surround that part with double quotes (e.g., `"Question, with comma","Answer",10`).</li>
+              <li>No column headers needed in your pasted text.</li>
             </ul>
           </div>
         </div>

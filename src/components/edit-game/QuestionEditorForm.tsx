@@ -7,30 +7,29 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea'; 
 import { Card, CardContent } from '@/components/ui/card';
-import { FileUp, ImageIcon, Loader2, Save, X } from 'lucide-react'; // Added Loader2
+import { FileUp, ImageIcon, Loader2, Save, X } from 'lucide-react'; 
 import { useState } from 'react';
-import type { Question } from '@/types/quiz'; // Import Question type
-import { addQuestionToGameInFirestore } from '@/lib/firebaseService'; // Import service
+import type { Question } from '@/types/quiz'; 
+import { addQuestionToGameInFirestore } from '@/lib/firebaseService'; 
 import { useToast } from '@/hooks/use-toast';
 
 interface QuestionEditorFormProps {
-  gameId: string; // Game ID is needed to save the question to the correct game
-  onSaveSuccess: () => void; // Callback after a question is successfully saved
+  gameId: string; 
+  onSaveSuccess: () => void; 
   onClose: () => void;
-  questionsSavedCount: number; // To display on the save button
+  questionsSavedCount: number; 
 }
 
 const pointsOptions = [5, 10, 15, 20, 25, 30, 50, 100];
 const imageOptions = [
   { value: 'none', label: 'No Image' },
   { value: 'question_image', label: 'Question with Image' },
-  // { value: 'answer_image', label: 'Answer with Image' }, // Simplified for now
 ];
 
 export default function QuestionEditorForm({ gameId, onSaveSuccess, onClose, questionsSavedCount }: QuestionEditorFormProps) {
   const [questionText, setQuestionText] = useState('');
   const [answerText, setAnswerText] = useState('');
-  const [points, setPoints] = useState('15');
+  const [points, setPoints] = useState('10'); // Default points
   const [imageOption, setImageOption] = useState('none');
   const [imageUrl, setImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +38,7 @@ export default function QuestionEditorForm({ gameId, onSaveSuccess, onClose, que
   const clearForm = () => {
     setQuestionText('');
     setAnswerText('');
-    setPoints('15');
+    setPoints('10');
     setImageOption('none');
     setImageUrl('');
   };
@@ -57,25 +56,32 @@ export default function QuestionEditorForm({ gameId, onSaveSuccess, onClose, que
 
     setIsLoading(true);
 
-    const questionData: Omit<Question, 'id'> = {
+    // We don't include id, createdAt, updatedAt here, as Firestore/service handles them
+    const questionData: Omit<Question, 'id' | 'createdAt' | 'updatedAt'> = {
       questionText,
       answerText,
       points: parseInt(points, 10),
     };
 
     if (imageOption !== 'none' && imageUrl.trim()) {
+      // Basic URL validation (can be enhanced)
+      if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        toast({ title: "Invalid URL", description: "Image URL must start with http:// or https://", variant: "destructive" });
+        setIsLoading(false);
+        return;
+      }
       questionData.media = {
         url: imageUrl.trim(),
-        type: 'image', // Assuming 'image' for now, could be 'gif' if URL suggests it
-        alt: questionText.substring(0, 50) || 'Question image', // Simple alt text
+        type: 'image', 
+        alt: questionText.substring(0, 50) || 'Question image', 
       };
     }
 
     try {
       await addQuestionToGameInFirestore(gameId, questionData);
-      toast({ title: "Question Saved!", description: "Your question has been added to the game." });
-      onSaveSuccess(); // Notify parent to update count or UI
-      clearForm(); // Clear form for next entry
+      // Toast is handled by parent onSaveSuccess now
+      onSaveSuccess(); 
+      clearForm(); 
     } catch (error) {
       console.error("Failed to save question:", error);
       toast({ title: "Error Saving Question", description: (error as Error).message || "Could not save the question.", variant: "destructive" });
@@ -100,6 +106,7 @@ export default function QuestionEditorForm({ gameId, onSaveSuccess, onClose, que
                   onChange={(e) => setQuestionText(e.target.value)}
                   className="mt-1 text-base min-h-[100px]"
                   disabled={isLoading}
+                  required
                 />
               </div>
               <div>
@@ -145,9 +152,10 @@ export default function QuestionEditorForm({ gameId, onSaveSuccess, onClose, que
                   onChange={(e) => setAnswerText(e.target.value)}
                   className="mt-1 text-base min-h-[100px]"
                   disabled={isLoading}
+                  required
                 />
               </div>
-              {(imageOption === 'question_image') && ( // Simplified to only 'question_image' for now
+              {(imageOption === 'question_image') && ( 
                 <div>
                   <Label className="text-base font-semibold">Image/GIF URL</Label>
                   <p className="text-xs text-muted-foreground mb-2">Paste URL. (e.g. https://placehold.co/600x400.png)</p>
@@ -185,11 +193,14 @@ export default function QuestionEditorForm({ gameId, onSaveSuccess, onClose, que
               disabled={isLoading}
             >
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {isLoading ? 'Saving...' : `Save ${questionsSavedCount > 0 ? `(${questionsSavedCount})` : ''}`}
+              {isLoading ? 'Saving...' : `Save Question`}
             </Button>
             <Button type="button" variant="outline" onClick={onClose} className="text-base" disabled={isLoading}>
               <X className="mr-2 h-4 w-4" /> Close
             </Button>
+             <span className="text-sm text-muted-foreground ml-auto">
+              Total questions in game: {questionsSavedCount}
+            </span>
           </div>
         </form>
       </CardContent>

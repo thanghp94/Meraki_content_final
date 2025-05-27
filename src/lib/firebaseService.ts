@@ -12,6 +12,7 @@ import {
   doc,
   writeBatch,
   increment,
+  Timestamp as FirestoreTimestamp, // Import Timestamp explicitly
 } from 'firebase/firestore';
 import type { Folder, GameStub, LibraryItem } from '@/types/library';
 import type { Question } from '@/types/quiz';
@@ -120,7 +121,6 @@ export async function getLibraryItemsFromFirestore(): Promise<LibraryItem[]> {
     const games = await getGamesFromFirestore();
     const folders = await getFoldersFromFirestore();
     
-    // Combine and sort by creation date, most recent first
     const allItems = [...games, ...folders];
     allItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     
@@ -134,7 +134,7 @@ export async function getLibraryItemsFromFirestore(): Promise<LibraryItem[]> {
 // --- QUESTIONS ---
 export async function addQuestionToGameInFirestore(
   gameId: string,
-  questionData: Omit<Question, 'id'> // Firestore will generate the ID for the question document
+  questionData: Omit<Question, 'id' | 'createdAt' | 'updatedAt'> 
 ): Promise<string> {
   if (!gameId) {
     throw new Error('Game ID is required to add a question.');
@@ -143,27 +143,97 @@ export async function addQuestionToGameInFirestore(
     const gameRef = doc(db, 'games', gameId);
     const questionsCollectionRef = collection(gameRef, 'questions');
     
-    // Use a batch to add the question and update the game's questionCount atomically
     const batch = writeBatch(db);
 
-    // Add the new question document to the subcollection
-    const newQuestionRef = doc(questionsCollectionRef); // Creates a ref with a new auto-generated ID
+    const newQuestionRef = doc(questionsCollectionRef); 
     batch.set(newQuestionRef, {
       ...questionData,
-      createdAt: serverTimestamp(), // Add timestamps for questions too
+      createdAt: serverTimestamp(), 
       updatedAt: serverTimestamp(),
     });
 
-    // Increment the questionCount on the parent game document
     batch.update(gameRef, {
       questionCount: increment(1),
-      updatedAt: serverTimestamp(), // Also update the game's updatedAt timestamp
+      updatedAt: serverTimestamp(), 
     });
 
     await batch.commit();
-    return newQuestionRef.id; // Return the ID of the newly created question document
+    return newQuestionRef.id; 
   } catch (error) {
     console.error('Error adding question to game in Firestore: ', error);
     throw new Error('Failed to add question to the game.');
+  }
+}
+
+export async function getQuestionsForGameFromFirestore(gameId: string): Promise<Question[]> {
+  if (!gameId) {
+    console.warn('No gameId provided to getQuestionsForGameFromFirestore');
+    return [];
+  }
+  try {
+    const questionsCollectionRef = collection(db, 'games', gameId, 'questions');
+    const q = query(questionsCollectionRef, orderBy('createdAt', 'asc')); // Order by creation time
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      // Ensure media object is correctly formed or undefined
+      const media = data.media && data.media.url ? {
+        url: data.media.url,
+        type: data.media.type || 'image', // Default to image if type is missing
+        alt: data.media.alt || '',
+      } : undefined;
+
+      return {
+        id: docSnap.id,
+        questionText: data.questionText,
+        answerText: data.answerText,
+        points: data.points,
+        media: media,
+        createdAt: (data.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+        updatedAt: (data.updatedAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+      } as Question;
+    });
+  } catch (error) {
+    console.error('Error fetching questions for game from Firestore: ', error);
+    return [];
+  }
+}
+
+export async function addMultipleQuestionsToGameInFirestore(
+  gameId: string,
+  questions: Omit<Question, 'id' | 'createdAt' | 'updatedAt'>[]
+): Promise<void> {
+  if (!gameId) {
+    throw new Error('Game ID is required to add questions.');
+  }
+  if (!questions || questions.length === 0) {
+    return; // No questions to add
+  }
+
+  try {
+    const gameRef = doc(db, 'games', gameId);
+    const questionsCollectionRef = collection(gameRef, 'questions');
+    const batch = writeBatch(db);
+
+    questions.forEach(questionData => {
+      const newQuestionRef = doc(questionsCollectionRef); // Create new doc ref for each question
+      batch.set(newQuestionRef, {
+        ...questionData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    });
+
+    // Increment the questionCount on the parent game document by the number of new questions
+    batch.update(gameRef, {
+      questionCount: increment(questions.length),
+      updatedAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+  } catch (error) {
+    console.error('Error adding multiple questions to game in Firestore: ', error);
+    throw new Error('Failed to import questions.');
   }
 }

@@ -6,9 +6,11 @@ export interface Question {
   points: number;
   media?: {
     url: string;
-    type: 'image' | 'video' | 'gif'; // We'll primarily implement 'image'/'gif' display for now
-    alt?: string; // Made alt optional
+    type: 'image' | 'video' | 'gif'; 
+    alt?: string; 
   };
+  createdAt?: string; // ISO date string, optional for new questions before saving
+  updatedAt?: string; // ISO date string, optional for new questions before saving
 }
 
 export interface Topic {
@@ -28,7 +30,7 @@ export interface Tile {
   displayNumber: number; // 1 to gridSize
   question: Question;
   isRevealed: boolean;
-  revealedByTeamId?: string | null; // ID of the team that revealed this tile
+  revealedByTeamId?: string | null; 
   answeredCorrectly?: boolean | null;
 }
 
@@ -40,7 +42,6 @@ export interface GameSession {
   tiles: Tile[];
   currentTeamTurnIndex: number;
   status: 'setting_up' | 'in_progress' | 'finished';
-  // For modal control
   activeQuestion: Question | null;
   currentTileId: number | null; 
 }
@@ -51,4 +52,3 @@ export interface GameSetupConfig {
   teamNames: string[];
   gridSize: number;
 }
-
