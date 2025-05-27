@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Award, CheckCircle, Info, Play } from 'lucide-react';
 import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function GamePage() {
   const router = useRouter();
@@ -19,10 +21,6 @@ export default function GamePage() {
 
   useEffect(() => {
     if (!gameState || gameState.sessionId !== sessionId) {
-      // If there's no game state or session ID mismatch, redirect to setup
-      // This can happen on page refresh if state is not persisted
-      // For MVP, we just redirect. A real app might try to load session from backend.
-      // router.push('/setup');
       // console.warn("No active game session or session ID mismatch. Consider redirecting or loading state.");
     }
   }, [gameState, sessionId, router]);
@@ -52,7 +50,7 @@ export default function GamePage() {
   if (status === 'finished') {
     const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
     return (
-      <div className="flex flex-col items-center justify-center py-10">
+      <div className="flex flex-col items-center justify-center py-10 h-full">
         <Card className="w-full max-w-lg shadow-xl">
           <CardHeader className="text-center">
             <Award size={64} className="mx-auto text-primary" />
@@ -82,34 +80,34 @@ export default function GamePage() {
 
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-semibold text-center mb-2">Topic: {topic.name}</h2>
-        <Alert className="bg-primary text-primary-foreground text-center shadow-md">
+    <div className="flex flex-col h-full space-y-4">
+      {/* Top Section: Topic & Current Turn */}
+      <div className="flex-shrink-0 text-center">
+        <h2 className="text-2xl font-semibold mb-1 md:mb-2">Topic: {topic.name}</h2>
+        <Alert className="bg-primary text-primary-foreground shadow-md max-w-md mx-auto">
           <CheckCircle className="h-5 w-5 text-primary-foreground" />
-          <AlertTitle className="text-xl font-bold">
+          <AlertTitle className="text-lg md:text-xl font-bold">
             {currentTeam ? `${currentTeam.name}'s Turn` : "Loading..."}
           </AlertTitle>
         </Alert>
       </div>
       
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-1">
-          <Scoreboard teams={teams} currentTeamId={currentTeam?.id} />
+      {/* Middle Section: Game Grid (dominant) */}
+      <div className="flex-grow flex items-center justify-center min-h-0 py-2">
+        <div className="w-full h-full max-w-4xl p-1"> {/* Grid container */}
+          <GameGrid /> 
         </div>
-        <div className="md:col-span-2">
-          <GameGrid />
+      </div>
+
+      {/* Bottom Section: Scoreboard & End Game Button */}
+      <div className="flex-shrink-0 space-y-3 md:space-y-4">
+        <Scoreboard teams={teams} currentTeamId={currentTeam?.id} />
+        <div className="text-center pb-2">
+          <Button variant="destructive" size="sm" onClick={endGame}>End Game Early</Button>
         </div>
       </div>
 
       <QuestionModal />
-      
-      <div className="mt-8 text-center">
-        <Button variant="destructive" onClick={endGame}>End Game Early</Button>
-      </div>
     </div>
   );
 }
-
-// Minimal Card component if not already available (it is, but for completeness if it were missing)
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
