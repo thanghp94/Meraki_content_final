@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { FileUp, ImageIcon, Loader2, Save, X } from 'lucide-react'; 
 import { useState } from 'react';
 import type { Question } from '@/types/quiz'; 
-import { addQuestionToGameInFirestore } from '@/lib/firebaseService'; 
+// Remove database service import since we'll use API endpoints
 import { useToast } from '@/hooks/use-toast';
 
 interface QuestionEditorFormProps {
@@ -78,7 +78,17 @@ export default function QuestionEditorForm({ gameId, onSaveSuccess, onClose, que
     }
 
     try {
-      await addQuestionToGameInFirestore(gameId, questionData);
+      const response = await fetch(`/api/games/${gameId}/questions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(questionData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add question');
+      }
       // Toast is handled by parent onSaveSuccess now
       onSaveSuccess(); 
       clearForm(); 

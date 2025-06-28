@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Camera, FileUp, Globe, Image as ImageIcon, Lock, Save, Users, X, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { addGameToFirestore } from '@/lib/firebaseService'; // Import the service
+// Remove database service import since we'll use API endpoints
 import type { GameStub } from '@/types/library';
 
 
@@ -58,7 +58,20 @@ export default function MakeGameForm() {
     };
 
     try {
-      const gameId = await addGameToFirestore(gameDataForFirestore);
+      const response = await fetch('/api/games', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(gameDataForFirestore),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create game');
+      }
+      
+      const result = await response.json();
+      const gameId = result.id;
       toast({ title: 'Game Created!', description: `"${title}" has been created. Now add some questions.` });
       router.push(`/edit-game/${gameId}?name=${encodeURIComponent(title)}`);
     } catch (error) {

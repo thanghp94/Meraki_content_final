@@ -1,4 +1,3 @@
-
 'use client';
 
 import LibrarySidebar from '@/components/library/LibrarySidebar';
@@ -9,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { FolderPlus, Gamepad2, Loader2 } from 'lucide-react'; // Added Loader2
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import { getFoldersFromFirestore, getGamesFromFirestore, addFolderToFirestore } from '@/lib/firebaseService'; // Import service functions
 import { useToast } from '@/hooks/use-toast';
 
 export default function LibraryPage() {
@@ -27,8 +25,18 @@ export default function LibraryPage() {
     const fetchLibraryData = async () => {
       setIsLoading(true);
       try {
-        const fetchedFolders = await getFoldersFromFirestore();
-        const fetchedGames = await getGamesFromFirestore();
+        const [foldersResponse, gamesResponse] = await Promise.all([
+          fetch('/api/folders'),
+          fetch('/api/games')
+        ]);
+        
+        if (!foldersResponse.ok || !gamesResponse.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        
+        const fetchedFolders = await foldersResponse.json();
+        const fetchedGames = await gamesResponse.json();
+        
         setFolders(fetchedFolders);
         setGames(fetchedGames);
       } catch (error) {
@@ -79,14 +87,29 @@ export default function LibraryPage() {
       try {
         // Use a simple placeholder for aiHint or derive from name
         const aiHint = folderName.split(' ').slice(0,2).join(' ').toLowerCase() || 'folder icon';
-        const newFolderId = await addFolderToFirestore({ 
-          name: folderName.trim(), 
-          aiHint,
-          // coverImageUrl will be set to default placeholder by service if not provided
-        }); 
+        
+        const response = await fetch('/api/folders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: folderName.trim(), 
+            aiHint,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create folder');
+        }
+        
         // Refetch folders to include the new one
-        const updatedFolders = await getFoldersFromFirestore();
-        setFolders(updatedFolders);
+        const foldersResponse = await fetch('/api/folders');
+        if (foldersResponse.ok) {
+          const updatedFolders = await foldersResponse.json();
+          setFolders(updatedFolders);
+        }
+        
         toast({ title: "Folder Created", description: `Folder "${folderName.trim()}" added.` });
       } catch (error) {
         console.error("Error creating folder:", error);

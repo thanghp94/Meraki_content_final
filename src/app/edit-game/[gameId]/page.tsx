@@ -12,7 +12,7 @@ import { X, Loader2, ListChecks, Info } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast'; 
 import type { Question } from '@/types/quiz';
-import { getQuestionsForGameFromFirestore, addMultipleQuestionsToGameInFirestore } from '@/lib/firebaseService';
+// Remove database service import since we'll use API endpoints
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function EditGamePage() {
@@ -30,7 +30,11 @@ export default function EditGamePage() {
     if (!gameId) return;
     setIsLoadingQuestions(true);
     try {
-      const fetchedQuestions = await getQuestionsForGameFromFirestore(gameId);
+      const response = await fetch(`/api/games/${gameId}/questions`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch questions');
+      }
+      const fetchedQuestions = await response.json();
       setQuestions(fetchedQuestions);
     } catch (error) {
       console.error("Error fetching questions:", error);
@@ -149,7 +153,17 @@ export default function EditGamePage() {
 
     if (newQuestions.length > 0) {
       try {
-        await addMultipleQuestionsToGameInFirestore(gameId, newQuestions);
+        const response = await fetch(`/api/games/${gameId}/questions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newQuestions),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to import questions');
+        }
         toast({
           title: "Import Successful!",
           description: `${newQuestions.length} questions imported.`,
