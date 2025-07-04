@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect } from 'react';
@@ -6,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useGame } from '@/contexts/GameContext';
 import GameGrid from '@/components/quiz/GameGrid';
 import QuestionModal from '@/components/quiz/QuestionModal';
+import PowerUpModal from '@/components/quiz/PowerUpModal';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Award, Info, Play } from 'lucide-react';
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 export default function GamePage() {
   const router = useRouter();
   const params = useParams();
-  const { gameState, endGame } = useGame();
+  const { gameState, endGame, activePowerUp, closePowerUpModal } = useGame();
   const sessionId = params.sessionId as string;
 
   useEffect(() => {
@@ -86,21 +86,30 @@ export default function GamePage() {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[calc(100vh-var(--header-height,4rem))] overflow-hidden">
-      <HorizontalTeamDisplay 
-        teams={teams} 
-        currentTeamId={currentTeam?.id} 
-        onEndGame={endGame}
-        // topicName={gameState.topic.name} // Removed
-      />
+    <div className="flex flex-col h-screen overflow-hidden">
+      <div className="flex-none">
+        <HorizontalTeamDisplay 
+          teams={teams} 
+          currentTeamId={currentTeam?.id} 
+          onEndGame={endGame}
+          // topicName={gameState.topic.name} // Removed
+        />
+      </div>
       
-      <div className="flex-grow flex items-center justify-center min-h-0 p-2 sm:p-4 bg-background">
-        <div className="w-full h-full max-w-5xl">
+      <div className="flex flex-1 min-h-0 p-4">
+        {/* Game grid */}
+        <div className="flex-1 min-h-0">
           <GameGrid /> 
         </div>
       </div>
 
       <QuestionModal />
+      <PowerUpModal 
+        powerUpId={activePowerUp?.powerUpId || null}
+        isOpen={!!activePowerUp}
+        onClose={closePowerUpModal}
+        teamName={activePowerUp?.teamName || ''}
+      />
     </div>
   );
 }

@@ -1,16 +1,53 @@
+import { PowerUpId, PowerUpInstance, PowerUpEffect } from './powerups';
 
 export interface Question {
   id: string;
+  topic?: string;
+  randomOrder?: number;
+  questionLevel?: number;
+  contentId?: string;
+  questionType: 'text' | 'multiple_choice' | 'one_choice';
+  nbDung?: string;
+  video?: string;
+  picture?: string;
+  cauTraLoi1?: string; // Answer choice 1
+  cauTraLoi2?: string; // Answer choice 2
+  cauTraLoi3?: string; // Answer choice 3
+  cauTraLoi4?: string; // Answer choice 4
+  correctChoice?: string; // A, B, C, or D for multiple choice
+  writingChoice?: string;
+  time?: number;
+  explanation?: string;
+  questionOrder?: number;
+  translation?: string;
+  update?: string;
+  igLao?: string;
+  answer?: string; // For text-based answers
+  showAnswer?: boolean;
+  studentSeen?: string;
+  type: 'WSC' | 'TAHN' | 'Grapeseed'; // Question category type
   questionText: string;
-  answerText: string;
   points: number;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'gif';
+  mediaAlt?: string;
+  createdAt?: string; // ISO date string, optional for new questions before saving
+  updatedAt?: string; // ISO date string, optional for new questions before saving
+  // Legacy support
+  answerText?: string;
   media?: {
     url: string;
     type: 'image' | 'video' | 'gif'; 
     alt?: string; 
   };
-  createdAt?: string; // ISO date string, optional for new questions before saving
-  updatedAt?: string; // ISO date string, optional for new questions before saving
+}
+
+export interface GameQuestionLink {
+  id: string;
+  gameId: string;
+  questionId: string;
+  orderInGame: number;
+  createdAt?: string;
 }
 
 export interface Topic {
@@ -28,7 +65,9 @@ export interface Team {
 export interface Tile {
   id: number; // 0 to gridSize-1
   displayNumber: number; // 1 to gridSize
-  question: Question;
+  type: 'question' | 'powerup';
+  question?: Question;
+  powerUpId?: PowerUpId;
   isRevealed: boolean;
   revealedByTeamId?: string | null; 
   answeredCorrectly?: boolean | null;
@@ -43,7 +82,9 @@ export interface GameSession {
   currentTeamTurnIndex: number;
   status: 'setting_up' | 'in_progress' | 'finished';
   activeQuestion: Question | null;
-  currentTileId: number | null; 
+  currentTileId: number | null;
+  enabledPowerUps: PowerUpId[]; // List of power-ups enabled for this game
+  powerUpProbability: number; // Probability of a tile being a power-up
 }
 
 export interface GameSetupConfig {
@@ -51,4 +92,6 @@ export interface GameSetupConfig {
   numberOfTeams: number;
   teamNames: string[];
   gridSize: number;
+  enabledPowerUps: PowerUpId[]; // Power-ups selected by teacher
+  powerUpProbability: number; // Probability of tiles being power-ups
 }

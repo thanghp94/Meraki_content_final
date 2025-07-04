@@ -1,11 +1,12 @@
 'use client';
 
-import LibrarySidebar from '@/components/library/LibrarySidebar';
 import LibraryGrid from '@/components/library/LibraryGrid';
-import type { LibraryItem, Folder, GameStub } from '@/types/library'; // Updated imports
+import TopicsByUnit from '@/components/library/TopicsByUnit';
+import type { LibraryItem, Folder } from '@/types/library';
 import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { FolderPlus, Gamepad2, Loader2 } from 'lucide-react'; // Added Loader2
+import { Input } from '@/components/ui/input';
+import { FolderPlus, Loader2, Search, BookOpen, Folder as FolderIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
@@ -14,10 +15,9 @@ export default function LibraryPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'folders' | 'games'>('folders');
+  const [activeFilter, setActiveFilter] = useState<'units' | 'folders'>('units');
   
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [games, setGames] = useState<GameStub[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
@@ -25,25 +25,19 @@ export default function LibraryPage() {
     const fetchLibraryData = async () => {
       setIsLoading(true);
       try {
-        const [foldersResponse, gamesResponse] = await Promise.all([
-          fetch('/api/folders'),
-          fetch('/api/games')
-        ]);
+        const foldersResponse = await fetch('/api/folders');
         
-        if (!foldersResponse.ok || !gamesResponse.ok) {
+        if (!foldersResponse.ok) {
           throw new Error('Failed to fetch data');
         }
         
         const fetchedFolders = await foldersResponse.json();
-        const fetchedGames = await gamesResponse.json();
-        
         setFolders(fetchedFolders);
-        setGames(fetchedGames);
       } catch (error) {
         console.error("Error fetching library data:", error);
         toast({
           title: "Error loading library",
-          description: "Could not fetch your games and folders. Please try again later.",
+          description: "Could not fetch your folders. Please try again later.",
           variant: "destructive",
         });
       } finally {
@@ -54,38 +48,24 @@ export default function LibraryPage() {
   }, [toast]);
 
   const allItems: LibraryItem[] = useMemo(() => {
-    // Ensure fetched data is correctly typed for LibraryItem union
     const foldersWithType: LibraryItem[] = folders.map(folder => ({ ...folder, type: 'folder' as const }));
-    const gamesWithType: LibraryItem[] = games.map(game => ({ ...game, type: 'game' as const }));
-    
-    const combined = [...foldersWithType, ...gamesWithType];
-    combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return combined;
-  }, [folders, games]);
+    foldersWithType.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return foldersWithType;
+  }, [folders]);
 
   const filteredItems = useMemo(() => {
     let itemsToFilter = allItems;
-    if (activeFilter === 'folders') {
-      itemsToFilter = itemsToFilter.filter(item => item.type === 'folder');
-    } else if (activeFilter === 'games') {
-      itemsToFilter = itemsToFilter.filter(item => item.type === 'game');
-    }
     if (searchTerm) {
       itemsToFilter = itemsToFilter.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
     return itemsToFilter;
-  }, [allItems, activeFilter, searchTerm]);
-
-  const handleCreateGame = () => {
-    router.push('/make-game');
-  };
+  }, [allItems, searchTerm]);
 
   const handleCreateFolder = async () => {
     const folderName = prompt("Enter new folder name:");
     if (folderName && folderName.trim() !== "") {
       setIsCreatingFolder(true);
       try {
-        // Use a simple placeholder for aiHint or derive from name
         const aiHint = folderName.split(' ').slice(0,2).join(' ').toLowerCase() || 'folder icon';
         
         const response = await fetch('/api/folders', {
@@ -123,40 +103,79 @@ export default function LibraryPage() {
   return (
     <div className="flex flex-col h-full min-h-screen">
       <Header />
-      <header className="bg-library-header text-library-header-foreground py-6 px-4 sm:px-8 text-center shadow-md">
-        <h1 className="text-3xl font-bold">MY FOLDERS</h1>
-        <p className="text-sm">Organize your games</p>
-      </header>
 
-      <div className="flex-grow flex flex-col md:flex-row p-4 sm:p-6 gap-4 sm:gap-6 container mx-auto">
-        <LibrarySidebar 
-          className="w-full md:w-72 lg:w-80 flex-shrink-0"
-          onSearch={setSearchTerm}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          onNewGame={handleCreateGame}
-          onNewFolder={handleCreateFolder}
-          folderCount={folders.length} // Use actual count from fetched data
-          isCreatingFolder={isCreatingFolder}
-        />
-        <main className="flex-grow min-w-0">
+      <div className="bg-background" style={{ padding: 'var(--spacing-6)' }}>
+        {/* Navigation Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activeFilter === 'units' ? 'default' : 'outline'}
+              onClick={() => setActiveFilter('units')}
+              className="flex items-center gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              View by Unit
+            </Button>
+            <Button
+              variant={activeFilter === 'folders' ? 'default' : 'outline'}
+              onClick={() => setActiveFilter('folders')}
+              className="flex items-center gap-2"
+            >
+              <FolderIcon className="h-4 w-4" />
+              Folders ({folders.length})
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {activeFilter === 'folders' && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search folders..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+            )}
+            {activeFilter === 'folders' && (
+              <Button
+                onClick={handleCreateFolder}
+                disabled={isCreatingFolder}
+                className="flex items-center gap-2"
+              >
+                {isCreatingFolder ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FolderPlus className="h-4 w-4" />
+                )}
+                New Folder
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <main className="w-full">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-10">
               <Loader2 size={64} className="mb-4 animate-spin" />
               <h2 className="text-2xl font-semibold mb-2">Loading Library...</h2>
-              <p>Fetching your games and folders.</p>
+              <p>Fetching your content and folders.</p>
             </div>
+          ) : activeFilter === 'units' ? (
+            <TopicsByUnit />
           ) : filteredItems.length > 0 ? (
             <LibraryGrid items={filteredItems} />
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-10">
-              <Gamepad2 size={64} className="mb-4" />
-              <h2 className="text-2xl font-semibold mb-2">No items found</h2>
+              <FolderPlus size={64} className="mb-4" />
+              <h2 className="text-2xl font-semibold mb-2">No folders found</h2>
               <p className="mb-6">
-                {activeFilter === 'all' && !searchTerm ? "Your library is empty. Try creating a new game or folder!" : "Try adjusting your search or filters."}
+                {!searchTerm ? "Your library is empty. Try creating a new folder!" : "Try adjusting your search."}
               </p>
-              {activeFilter !== 'all' && (
-                 <Button variant="outline" onClick={() => setActiveFilter('all')}>Show All Items</Button>
+              {searchTerm && (
+                <Button variant="outline" onClick={() => setSearchTerm('')}>Clear Search</Button>
               )}
             </div>
           )}

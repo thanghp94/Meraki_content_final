@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Settings, Library } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -9,7 +9,16 @@ export default function Header() {
           <LayoutGrid size={28} />
           GridWise Quizzing
         </Link>
-        {/* Add navigation links here if needed in the future */}
+        <nav className="flex items-center gap-4">
+          <Link href="/library" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            <Library size={20} />
+            Library
+          </Link>
+          <Link href="/admin" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            <Settings size={20} />
+            Admin
+          </Link>
+        </nav>
       </div>
     </header>
   );

@@ -3,8 +3,10 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import type { GameSession, GameSetupConfig, Question, Team, Tile, Topic } from '@/types/quiz';
+import type { PowerUpId } from '@/types/powerups';
 import { TOPICS } from '@/lib/quizData';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
+import { activatePowerUp as activatePowerUpService } from '@/lib/powerUpService';
 
 // Helper to shuffle an array
 function shuffleArray<T>(array: T[]): T[] {
@@ -16,31 +18,31 @@ function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
-
 interface GameContextType {
   gameState: GameSession | null;
-  initializeGame: (config: GameSetupConfig) => string; // Returns sessionId
+  initializeGame: (config: GameSetupConfig, selectedTopic?: Topic) => string; // Returns sessionId
   revealTile: (tileId: number) => void;
   adjudicateAnswer: (isCorrect: boolean) => void;
   closeQuestionModal: () => void;
   endGame: () => void;
+  activePowerUp: { powerUpId: PowerUpId; teamName: string } | null;
+  closePowerUpModal: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [gameState, setGameState] = useState<GameSession | null>(null);
+  const [activePowerUp, setActivePowerUp] = useState<{ powerUpId: PowerUpId; teamName: string } | null>(null);
 
-  const initializeGame = useCallback((config: GameSetupConfig): string => {
-    const selectedTopic = TOPICS.find(t => t.id === config.topicId);
-    if (!selectedTopic) {
+  const initializeGame = useCallback((config: GameSetupConfig, selectedTopic?: Topic): string => {
+    const topic = selectedTopic || TOPICS.find(t => t.id === config.topicId);
+    if (!topic) {
       throw new Error("Selected topic not found.");
     }
 
-    if (selectedTopic.questions.length < config.gridSize) {
-      // This case should ideally be prevented by disabling grid sizes in UI
-      // if not enough questions are available for the selected topic.
-      alert(`Warning: The selected topic "${selectedTopic.name}" has fewer questions (${selectedTopic.questions.length}) than the selected grid size (${config.gridSize}). Some tiles may not have unique questions or the game may not function as expected.`);
+    if (topic.questions.length < config.gridSize) {
+      alert(`Warning: The selected topic "${topic.name}" has fewer questions (${topic.questions.length}) than the selected grid size (${config.gridSize}). Some tiles may not have unique questions or the game may not function as expected.`);
     }
     
     const teams: Team[] = config.teamNames.map((name, index) => ({
@@ -49,20 +51,44 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       score: 0,
     }));
 
-    const availableQuestions = shuffleArray([...selectedTopic.questions]);
-    const gameQuestions = availableQuestions.slice(0, config.gridSize);
+    const availableQuestions = shuffleArray([...topic.questions]);
     
-    const tiles: Tile[] = Array.from({ length: config.gridSize }, (_, i) => ({
-      id: i,
-      displayNumber: i + 1,
-      question: gameQuestions[i % gameQuestions.length], // Use modulo to repeat questions if fewer than grid size
-      isRevealed: false,
-    }));
+    // Determine which tiles will be power-ups
+    const powerUpTileCount = Math.floor(config.gridSize * config.powerUpProbability);
+    const powerUpTileIndices = shuffleArray(Array.from({ length: config.gridSize }, (_, i) => i))
+      .slice(0, powerUpTileCount);
+    
+    const tiles: Tile[] = Array.from({ length: config.gridSize }, (_, index) => {
+      const isPowerUpTile = powerUpTileIndices.includes(index);
+      
+      if (isPowerUpTile && config.enabledPowerUps.length > 0) {
+        // Randomly select a power-up from enabled ones
+        const randomPowerUp = config.enabledPowerUps[Math.floor(Math.random() * config.enabledPowerUps.length)];
+        return {
+          id: index,
+          displayNumber: index + 1,
+          type: 'powerup' as const,
+          powerUpId: randomPowerUp,
+          isRevealed: false,
+        };
+      } else {
+        // Regular question tile
+        const questionIndex = index - powerUpTileIndices.filter(i => i < index).length;
+        const question = availableQuestions[questionIndex] || availableQuestions[0]; // Fallback
+        return {
+          id: index,
+          displayNumber: index + 1,
+          type: 'question' as const,
+          question,
+          isRevealed: false,
+        };
+      }
+    });
 
     const sessionId = uuidv4();
     const newGame: GameSession = {
       sessionId,
-      topic: selectedTopic,
+      topic: topic,
       teams,
       gridSize: config.gridSize,
       tiles,
@@ -70,6 +96,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       status: 'in_progress',
       activeQuestion: null,
       currentTileId: null,
+      enabledPowerUps: config.enabledPowerUps,
+      powerUpProbability: config.powerUpProbability,
     };
     setGameState(newGame);
     return sessionId;
@@ -81,11 +109,54 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const tile = prev.tiles.find(t => t.id === tileId);
       if (!tile || tile.isRevealed) return prev;
 
-      return {
-        ...prev,
-        activeQuestion: tile.question,
-        currentTileId: tileId,
-      };
+      // If it's a power-up tile, auto-apply the effect and show modal
+      if (tile.type === 'powerup' && tile.powerUpId) {
+        const currentTeam = prev.teams[prev.currentTeamTurnIndex];
+        const effects = activatePowerUpService(tile.powerUpId, currentTeam.id, prev.teams);
+        
+        // Apply effects to teams
+        const updatedTeams = prev.teams.map(team => {
+          const teamEffects = effects.filter(effect => effect.sourceTeamId === team.id);
+          let updatedTeam = { ...team };
+
+          teamEffects.forEach(effect => {
+            if (effect.type === 'points' && effect.points !== undefined) {
+              updatedTeam.score = Math.max(0, updatedTeam.score + effect.points);
+            }
+          });
+
+          return updatedTeam;
+        });
+
+        // Mark tile as revealed and move to next team
+        const updatedTiles = prev.tiles.map(t => 
+          t.id === tileId 
+          ? { ...t, isRevealed: true, revealedByTeamId: currentTeam.id } 
+          : t
+        );
+
+        const nextTeamTurnIndex = (prev.currentTeamTurnIndex + 1) % prev.teams.length;
+        const allTilesRevealed = updatedTiles.every(t => t.isRevealed);
+        const newStatus = allTilesRevealed ? 'finished' : 'in_progress';
+
+        // Show power-up modal
+        setActivePowerUp({ powerUpId: tile.powerUpId, teamName: currentTeam.name });
+
+        return {
+          ...prev,
+          teams: updatedTeams,
+          tiles: updatedTiles,
+          currentTeamTurnIndex: nextTeamTurnIndex,
+          status: newStatus,
+        };
+      } else {
+        // Regular question tile - show question modal
+        return {
+          ...prev,
+          activeQuestion: tile.question || null,
+          currentTileId: tileId,
+        };
+      }
     });
   }, []);
   
@@ -95,7 +166,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return {
         ...prev,
         activeQuestion: null,
-        // currentTileId is kept to mark the tile after adjudication
       };
     });
   }, []);
@@ -107,7 +177,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const currentTeam = prev.teams[prev.currentTeamTurnIndex];
       const tile = prev.tiles.find(t => t.id === prev.currentTileId);
 
-      if (!tile || tile.isRevealed) return prev; // Should not happen if logic is correct
+      if (!tile || tile.isRevealed || tile.type !== 'question') return prev;
 
       const updatedTiles = prev.tiles.map(t => 
         t.id === prev.currentTileId 
@@ -116,7 +186,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       );
 
       const updatedTeams = [...prev.teams];
-      if (isCorrect) {
+      if (isCorrect && tile.question) {
         updatedTeams[prev.currentTeamTurnIndex] = {
           ...currentTeam,
           score: currentTeam.score + tile.question.points,
@@ -124,7 +194,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
       
       const nextTeamTurnIndex = (prev.currentTeamTurnIndex + 1) % prev.teams.length;
-      
       const allTilesRevealed = updatedTiles.every(t => t.isRevealed);
       const newStatus = allTilesRevealed ? 'finished' : 'in_progress';
 
@@ -133,7 +202,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         teams: updatedTeams,
         tiles: updatedTiles,
         currentTeamTurnIndex: nextTeamTurnIndex,
-        activeQuestion: null, // Close modal after adjudication
+        activeQuestion: null,
         currentTileId: null,
         status: newStatus,
       };
@@ -147,6 +216,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const closePowerUpModal = useCallback(() => {
+    setActivePowerUp(null);
+  }, []);
+
   const contextValue = useMemo(() => ({
     gameState,
     initializeGame,
@@ -154,8 +227,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     adjudicateAnswer,
     closeQuestionModal,
     endGame,
-  }), [gameState, initializeGame, revealTile, adjudicateAnswer, closeQuestionModal, endGame]);
-
+    activePowerUp,
+    closePowerUpModal,
+  }), [gameState, initializeGame, revealTile, adjudicateAnswer, closeQuestionModal, endGame, activePowerUp, closePowerUpModal]);
 
   return <GameContext.Provider value={contextValue}>{children}</GameContext.Provider>;
 };
