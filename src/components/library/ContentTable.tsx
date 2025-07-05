@@ -6,7 +6,7 @@ import { ChevronDown, ChevronRight, ListChecks, Play, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import ContentViewModal from '@/components/ui/content-view-modal';
+import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import type { ContentItem } from '@/lib/databaseService';
 
 interface ContentTableProps {

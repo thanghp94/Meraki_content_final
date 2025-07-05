@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronDown, ChevronRight, BookOpen, Image, Eye, Play, FileText } from 'lucide-react';
-import ContentViewModal from '@/components/ui/content-view-modal';
+import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -103,7 +103,7 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
     }
   }, [programFilter]);
 
-  const toggleUnit = (unit: string) => {
+  const toggleUnit = async (unit: string) => {
     // Only allow one unit to be selected at a time
     if (expandedUnits.has(unit)) {
       // If clicking the same unit, collapse it
@@ -111,6 +111,37 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
     } else {
       // If clicking a different unit, expand only that one
       setExpandedUnits(new Set([unit]));
+      
+      // Check if this unit already has topics loaded
+      const unitGroup = unitGroups.find(group => group.unit === unit);
+      if (unitGroup && unitGroup.topics.length === 0 && programFilter) {
+        // Fetch topics for this specific unit
+        try {
+          console.log('Fetching topics for unit:', unit, 'program:', programFilter);
+          const topicsUrl = `/api/topics/by-unit?program=${encodeURIComponent(programFilter)}&unit=${encodeURIComponent(unit)}`;
+          const response = await fetch(topicsUrl);
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch unit topics');
+          }
+          
+          const unitData = await response.json();
+          console.log('Received topics for unit:', unit, unitData);
+          
+          // Update the specific unit with its topics
+          if (unitData.length > 0 && unitData[0].topics) {
+            setUnitGroups(prevGroups => 
+              prevGroups.map(group => 
+                group.unit === unit 
+                  ? { ...group, topics: unitData[0].topics }
+                  : group
+              )
+            );
+          }
+        } catch (error) {
+          console.error('Error fetching topics for unit:', unit, error);
+        }
+      }
     }
   };
 

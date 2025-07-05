@@ -8,7 +8,7 @@ import { X, ChevronLeft, ChevronRight, Play, Volume2, Expand } from 'lucide-reac
 import TextToSpeechButton from '@/components/ui/text-to-speech-button';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { useToast } from '@/hooks/use-toast';
-import ContentQuizModal from '@/components/ui/content-quiz-modal';
+import ContentQuizModal from '@/components/ui/content-quiz-modal-colorful';
 
 interface ContentData {
   id: string;
@@ -205,7 +205,7 @@ export default function ContentViewModal({
               ) : content ? (
                 <div className="flex h-full">
                   {/* Left Content Panel */}
-                  <div className="flex-1 p-6 overflow-y-auto">
+                  <div className="flex-1 p-6 overflow-y-auto max-h-full">
                     {/* Title with TTS */}
                     <div className="flex items-start gap-3 mb-6">
                       <h1 className="text-2xl font-bold text-blue-600 flex-1">
