@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronDown, ChevronRight, BookOpen, Image, Eye, Play, FileText } from 'lucide-react';
+import ContentViewModal from '@/components/ui/content-view-modal';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -23,10 +24,14 @@ interface Content {
   infor1: string;
   infor2: string;
   image1: string;
+  image2?: string;
   video1: string;
+  video2?: string;
   topicid: string;
   date_created: string;
   question_count: number;
+  visible?: boolean;
+  order_index?: number;
 }
 
 interface UnitGroup {
@@ -34,7 +39,11 @@ interface UnitGroup {
   topics: Topic[];
 }
 
-export default function TopicsByUnit() {
+interface TopicsByUnitProps {
+  programFilter?: string;
+}
+
+export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
   const router = useRouter();
   const [unitGroups, setUnitGroups] = useState<UnitGroup[]>([]);
   const [content, setContent] = useState<Content[]>([]);
@@ -48,12 +57,22 @@ export default function TopicsByUnit() {
   const [selectedUnitForGame, setSelectedUnitForGame] = useState<UnitGroup | null>(null);
   const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
   const [expandedTopicsInDialog, setExpandedTopicsInDialog] = useState<Set<string>>(new Set());
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
+  const [isContentModalOpen, setIsContentModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
+      setIsLoading(true);
       try {
+        // Build API URL with program filter if provided (no unit filter for initial load)
+        const topicsUrl = programFilter 
+          ? `/api/topics/by-unit?program=${encodeURIComponent(programFilter)}`
+          : '/api/topics/by-unit';
+        
+        console.log('Fetching initial placeholders for program:', programFilter, 'URL:', topicsUrl);
+        
         const [topicsResponse, contentResponse] = await Promise.all([
-          fetch('/api/topics/by-unit'),
+          fetch(topicsUrl),
           fetch('/api/admin/content')
         ]);
         
@@ -67,26 +86,32 @@ export default function TopicsByUnit() {
         const topicsData = await topicsResponse.json();
         const contentData = await contentResponse.json();
         
+        console.log('Received initial placeholders for', programFilter, ':', topicsData);
+        
         setUnitGroups(topicsData);
         setContent(contentData);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching initial data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    // Only fetch if programFilter is provided
+    if (programFilter) {
+      fetchInitialData();
+    }
+  }, [programFilter]);
 
   const toggleUnit = (unit: string) => {
-    const newExpanded = new Set(expandedUnits);
-    if (newExpanded.has(unit)) {
-      newExpanded.delete(unit);
+    // Only allow one unit to be selected at a time
+    if (expandedUnits.has(unit)) {
+      // If clicking the same unit, collapse it
+      setExpandedUnits(new Set());
     } else {
-      newExpanded.add(unit);
+      // If clicking a different unit, expand only that one
+      setExpandedUnits(new Set([unit]));
     }
-    setExpandedUnits(newExpanded);
   };
 
   const toggleTopic = (topicId: string) => {
@@ -100,9 +125,42 @@ export default function TopicsByUnit() {
     }
   };
 
-  // Get content by topic ID
+  // Get content by topic ID, filtering out hidden content and sorting by order_index
   const getContentForTopic = (topic: Topic): Content[] => {
-    return content.filter(item => item.topicid === topic.id);
+    return content
+      .filter(item => item.topicid === topic.id)
+      .filter(item => item.visible !== false) // Only show visible content (default to visible if not specified)
+      .sort((a, b) => {
+        // Sort by order_index, with items without order_index appearing last
+        const orderA = a.order_index ?? Number.MAX_SAFE_INTEGER;
+        const orderB = b.order_index ?? Number.MAX_SAFE_INTEGER;
+        return orderA - orderB;
+      });
+  };
+
+  const handleViewContent = (contentId: string) => {
+    console.log('Attempting to view content with ID:', contentId);
+    setSelectedContentId(contentId);
+    setIsContentModalOpen(true);
+  };
+
+  const closeContentModal = () => {
+    setIsContentModalOpen(false);
+    setSelectedContentId(null);
+  };
+
+  const handleContentNavigation = (direction: 'prev' | 'next') => {
+    const currentIndex = content.findIndex(item => item.id === selectedContentId);
+    if (currentIndex === -1) return;
+
+    let newIndex;
+    if (direction === 'prev') {
+      newIndex = currentIndex > 0 ? currentIndex - 1 : content.length - 1;
+    } else {
+      newIndex = currentIndex < content.length - 1 ? currentIndex + 1 : 0;
+    }
+
+    setSelectedContentId(content[newIndex].id);
   };
 
   if (isLoading) {
@@ -126,80 +184,91 @@ export default function TopicsByUnit() {
 
 
   return (
-    <div className="box-border flex flex-col items-start p-6 relative w-full max-w-[1440px] min-h-[600px] bg-white border-2 border-gray-300 rounded-lg space-y-4 mx-auto">
-      {unitGroups.map((unitGroup) => {
-        const isExpanded = expandedUnits.has(unitGroup.unit);
-        
-        return (
-          <Card key={unitGroup.unit} className="overflow-hidden">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleUnit(unitGroup.unit)}
-                    className="p-1 h-8 w-8"
-                  >
-                    {isExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <CardTitle className="text-lg">{unitGroup.unit}</CardTitle>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Calculate total questions for unit */}
-                  {(() => {
-                    const topicQuestionCounts = unitGroup.topics.map(topic => {
-                      const topicContent = getContentForTopic(topic);
-                      return topicContent.reduce((sum, content) => sum + (Number(content.question_count) || 0), 0);
-                    }).filter(count => count > 0);
-
-                    return topicQuestionCounts.length > 0 && (
-                      <Badge variant="secondary">
-                        {topicQuestionCounts.reduce((a, b) => a + b, 0)} questions
-                      </Badge>
-                    );
-                  })()}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedUnitForGame(unitGroup);
-                      setSelectedTopicIds(new Set());
-                      setSelectedContentIds(new Set());
-                      setIsUnitSelectionOpen(true);
-                    }}
-                  >
-                    <Play className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            
-            {isExpanded && (
-              <CardContent className="pt-0 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {unitGroup.topics.map((topic) => {
-                    const topicContent = getContentForTopic(topic);
-                    const questionCounts = topicContent.map(content => Number(content.question_count) || 0).filter(count => count > 0);
-                    const totalQuestions = questionCounts.reduce((sum, count) => sum + count, 0);
-                    
-                    return (
-                      <Card 
-                        key={topic.id}
-                        className="hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => toggleTopic(topic.id)}
+    <div className="box-border flex relative w-full max-w-[1440px] min-h-[600px] bg-white border-2 border-gray-300 rounded-lg mx-auto">
+      {/* Sidebar for units */}
+      <div className="w-48 border-r border-gray-200 bg-gray-50">
+        <div className="p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Units</h3>
+          <div className="space-y-1">
+            {unitGroups.map((unitGroup) => {
+              const isSelected = expandedUnits.has(unitGroup.unit);
+              
+              return (
+                <div
+                  key={unitGroup.unit}
+                  className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-colors ${
+                    isSelected 
+                      ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                      : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                  onClick={() => toggleUnit(unitGroup.unit)}
+                >
+                  <span className="text-sm font-medium truncate">
+                    {unitGroup.unit}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {unitGroup.topics.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUnitForGame(unitGroup);
+                          setSelectedTopicIds(new Set());
+                          setSelectedContentIds(new Set());
+                          setIsUnitSelectionOpen(true);
+                        }}
                       >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-grow min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-semibold text-sm truncate">
+                        <Play className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Main content area */}
+      <div className="flex-1 p-6">
+        {expandedUnits.size === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+            <BookOpen className="h-12 w-12 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Select a Unit</h3>
+            <p>Choose a unit from the sidebar to view its topics and content.</p>
+          </div>
+        ) : (
+          unitGroups.map((unitGroup) => {
+            const isExpanded = expandedUnits.has(unitGroup.unit);
+            
+            if (!isExpanded) return null;
+            
+            return (
+              <div key={`${unitGroup.unit}-content`} className="w-full">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-blue-700">{unitGroup.unit}</h2>
+                  <p className="text-gray-600 mt-1">Topics and content for this unit</p>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {unitGroup.topics.map((topic) => {
+                      const topicContent = getContentForTopic(topic);
+                      const questionCounts = topicContent.map(content => Number(content.question_count) || 0).filter(count => count > 0);
+                      const totalQuestions = questionCounts.reduce((sum, count) => sum + count, 0);
+                      
+                      return (
+                        <Card 
+                          key={topic.id}
+                          className="hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => toggleTopic(topic.id)}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2 flex-grow min-w-0">
+                                <h4 className="font-medium text-sm truncate">
                                   {topic.topic || 'Untitled Topic'}
                                 </h4>
                                 {expandedTopics.has(topic.id) ? (
@@ -209,17 +278,10 @@ export default function TopicsByUnit() {
                                 )}
                               </div>
                               {totalQuestions > 0 && (
-                                <Badge variant="secondary" className="mt-2 text-xs">
-                                  {totalQuestions} questions
-                                </Badge>
-                              )}
-                            </div>
-                            {totalQuestions > 0 && (
-                              <div className="flex-shrink-0">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                                  className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 flex-shrink-0"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     const topicContent = getContentForTopic(topic);
@@ -233,65 +295,78 @@ export default function TopicsByUnit() {
                                     }
                                   }}
                                 >
-                                  <Play className="h-4 w-4" />
+                                  <Play className="h-3 w-3" />
                                 </Button>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
 
-                {/* Content cards integrated within the same unit container */}
-                {unitGroup.topics.some(topic => expandedTopics.has(topic.id)) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                    {unitGroup.topics
-                      .filter(topic => expandedTopics.has(topic.id))
-                      .flatMap(topic => getContentForTopic(topic))
-                      .map((content) => (
-                        <Card key={content.id} className="hover:shadow-sm transition-shadow w-full bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 border-l-4 border-l-orange-400">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between gap-3">
-                              <h5 className="font-semibold text-sm truncate text-orange-900">{content.title}</h5>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-300">
-                                  {content.question_count} questions
-                                </Badge>
+                  {/* Content cards integrated within the same unit container */}
+                  {unitGroup.topics.some(topic => expandedTopics.has(topic.id)) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                      {unitGroup.topics
+                        .filter(topic => expandedTopics.has(topic.id))
+                        .flatMap(topic => {
+                          const topicContent = getContentForTopic(topic);
+                          return topicContent.map((content, index) => ({
+                            ...content,
+                            displayOrder: index + 1
+                          }));
+                        })
+                        .map((content) => (
+                          <Card 
+                            key={content.id} 
+                            className="hover:shadow-sm transition-shadow w-full bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 border-l-4 border-l-orange-400 cursor-pointer"
+                            onClick={() => handleViewContent(content.id)}
+                          >
+                            <CardContent className="p-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 flex-grow min-w-0">
+                                  <div 
+                                    className="flex items-center justify-center w-5 h-5 text-xs font-medium border border-orange-300 rounded bg-orange-100 text-orange-700 flex-shrink-0"
+                                    title={`Content order: ${content.displayOrder}`}
+                                  >
+                                    {content.displayOrder}
+                                  </div>
+                                  <h5 className="font-medium text-sm truncate text-orange-900">{content.title}</h5>
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-100"
+                                  className="h-7 w-7 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-100 flex-shrink-0"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     router.push(`/setup?contentId=${content.id}`);
                                   }}
                                 >
-                                  <Play className="h-4 w-4" />
+                                  <Play className="h-3 w-3" />
                                 </Button>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </div>
+                  )}
 
-                {/* Show empty state if expanded topic has no content */}
-                {unitGroup.topics.some(topic => expandedTopics.has(topic.id)) && 
-                 unitGroup.topics
-                   .filter(topic => expandedTopics.has(topic.id))
-                   .every(topic => getContentForTopic(topic).length === 0) && (
-                  <div className="text-center py-8 text-sm text-muted-foreground bg-muted/50 rounded-lg w-full">
-                    No content available for this topic
-                  </div>
-                )}
-              </CardContent>
-            )}
-          </Card>
-        );
-      })}
+                  {/* Show empty state if expanded topic has no content */}
+                  {unitGroup.topics.some(topic => expandedTopics.has(topic.id)) && 
+                   unitGroup.topics
+                     .filter(topic => expandedTopics.has(topic.id))
+                     .every(topic => getContentForTopic(topic).length === 0) && (
+                    <div className="text-center py-8 text-sm text-muted-foreground bg-muted/50 rounded-lg w-full">
+                      No content available for this topic
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
 
       {/* Content Selection Dialog */}
       <Dialog open={isContentSelectionOpen} onOpenChange={setIsContentSelectionOpen}>
@@ -540,6 +615,17 @@ export default function TopicsByUnit() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Content View Modal */}
+      {selectedContentId && (
+        <ContentViewModal
+          isOpen={isContentModalOpen}
+          onClose={closeContentModal}
+          contentId={selectedContentId}
+          onNavigate={handleContentNavigation}
+          showNavigation={content.length > 1}
+        />
+      )}
     </div>
   );
 }

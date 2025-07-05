@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -8,12 +7,10 @@ import ActionButtonsBar from '@/components/edit-game/ActionButtonsBar';
 import ImportQuestionsModal from '@/components/edit-game/ImportQuestionsModal';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { X, Loader2, ListChecks, Info } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast'; 
 import type { Question } from '@/types/quiz';
-// Remove database service import since we'll use API endpoints
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function EditGamePage() {
   const params = useParams();
@@ -22,13 +19,10 @@ export default function EditGamePage() {
   const [gameName, setGameName] = useState('Loading game...');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const { toast } = useToast(); 
-
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const fetchQuestions = useCallback(async () => {
     if (!gameId) return;
-    setIsLoadingQuestions(true);
     try {
       const response = await fetch(`/api/games/${gameId}/questions`);
       if (!response.ok) {
@@ -43,8 +37,6 @@ export default function EditGamePage() {
         description: "Could not load questions for this game.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoadingQuestions(false);
     }
   }, [gameId, toast]);
 
@@ -55,21 +47,9 @@ export default function EditGamePage() {
       setGameName(decodeURIComponent(nameFromQuery));
     } else if (gameId) {
       setGameName(`Game ID: ${gameId.substring(0, 8)}...`);
-      // In a real app, you'd fetch game details from Firestore if name isn't in query
     }
     fetchQuestions();
   }, [gameId, fetchQuestions]);
-
-
-  const handleSaveQuestionSuccess = () => {
-    toast({ title: "Question Saved!", description: "Your question has been added." });
-    fetchQuestions(); // Refetch questions to update the list and count
-  };
-
-  const handleCloseQuestionEditor = () => {
-    // This might be used if the form was a separate modal or had more complex close logic
-    console.log("Close question editor action");
-  };
 
   const handleOpenImportModal = () => {
     setIsImportModalOpen(true);
@@ -119,33 +99,31 @@ export default function EditGamePage() {
         }
       }
       
-      // Basic media handling from URL if a third/fourth part looks like a URL
-      // For simplicity, we're not doing full URL validation here.
       let media;
       const potentialMediaUrl = parts[3]?.trim();
       if (potentialMediaUrl && (potentialMediaUrl.startsWith('http://') || potentialMediaUrl.startsWith('https://'))) {
         media = {
           url: potentialMediaUrl,
-          type: 'image' as 'image', // Assuming image for now
+          type: 'image' as 'image',
           alt: `Imported image for: ${questionText.substring(0,30)}`
-        }
+        };
       }
 
-      newQuestions.push({ questionText, answerText, points, media });
+      newQuestions.push({
+        questionText,
+        answerText,
+        answer: answerText, // For compatibility with the new schema
+        points,
+        media,
+        type: 'WSC', // Default type
+        questionType: 'text' // Default question type
+      });
     });
 
     if (errors.length > 0) {
       toast({
         title: "Import Issues",
-        description: (
-          <div>
-            <p>{`Found ${errors.length} issue(s) with the import. Some questions might be skipped or use default values.`}</p>
-            <ul className="list-disc list-inside text-xs mt-2 max-h-20 overflow-y-auto">
-              {errors.slice(0, 5).map((err, i) => <li key={i}>{err}</li>)}
-              {errors.length > 5 && <li>...and {errors.length - 5} more.</li>}
-            </ul>
-          </div>
-        ),
+        description: `Found ${errors.length} issue(s) with the import. Some questions might be skipped or use default values.`,
         variant: "destructive",
         duration: 7000,
       });
@@ -178,13 +156,12 @@ export default function EditGamePage() {
         });
       }
     } else if (errors.length === lines.length) {
-        toast({
-            title: "Import Failed",
-            description: "No valid questions could be parsed from the input.",
-            variant: "destructive",
-        });
+      toast({
+        title: "Import Failed",
+        description: "No valid questions could be parsed from the input.",
+        variant: "destructive",
+      });
     }
-    // Modal closes itself via its onImport prop
   };
 
   return (
@@ -213,49 +190,11 @@ export default function EditGamePage() {
         <ActionButtonsBar onOpenImportModal={handleOpenImportModal} />
 
         {gameId ? (
-          <>
-            <QuestionEditorForm 
-              gameId={gameId}
-              onSaveSuccess={handleSaveQuestionSuccess} 
-              onClose={handleCloseQuestionEditor} 
-              questionsSavedCount={questions.length} // Display total questions in game
-            />
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ListChecks className="h-6 w-6 text-primary" />
-                  Existing Questions ({questions.length})
-                </CardTitle>
-                <CardDescription>
-                  Here are the questions currently in your game.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingQuestions ? (
-                  <div className="flex items-center justify-center py-4 text-muted-foreground">
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading questions...
-                  </div>
-                ) : questions.length > 0 ? (
-                  <ul className="space-y-3">
-                    {questions.map((q, index) => (
-                      <li key={q.id || index} className="p-3 border rounded-md bg-background shadow-sm">
-                        <p className="font-medium text-foreground">{index + 1}. {q.questionText}</p>
-                        <p className="text-sm text-primary">Answer: {q.answerText}</p>
-                        <p className="text-xs text-muted-foreground">Points: {q.points}</p>
-                        {q.media && <p className="text-xs text-muted-foreground">Media: <a href={q.media.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View Image</a></p>}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <Info className="mx-auto h-10 w-10 mb-2" />
-                    <p>No questions added to this game yet.</p>
-                    <p className="text-sm">Use the form above or import questions to get started.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
+          <QuestionEditorForm 
+            gameId={gameId}
+            questions={questions}
+            onQuestionsChange={setQuestions}
+          />
         ) : (
           <Alert variant="destructive">
             <AlertTitle>Error</AlertTitle>
@@ -263,6 +202,7 @@ export default function EditGamePage() {
           </Alert>
         )}
       </main>
+
       <ImportQuestionsModal
         isOpen={isImportModalOpen}
         onClose={handleCloseImportModal}

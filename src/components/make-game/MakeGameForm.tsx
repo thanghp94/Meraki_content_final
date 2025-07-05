@@ -10,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Camera, FileUp, Globe, Image as ImageIcon, Lock, Save, Users, X, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 // Remove database service import since we'll use API endpoints
 import type { GameStub } from '@/types/library';
 
@@ -27,6 +27,7 @@ const languages = [
 export default function MakeGameForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [language, setLanguage] = useState('en');
@@ -35,6 +36,24 @@ export default function MakeGameForm() {
   const [imageUrl, setImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [aiHint, setAiHint] = useState(''); // For placeholder images
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
+
+  // Handle URL parameters for pre-selected content
+  useEffect(() => {
+    const contentId = searchParams.get('contentId');
+    const contentName = searchParams.get('contentName');
+    
+    if (contentId && contentName) {
+      setSelectedContentId(contentId);
+      setTitle(contentName);
+      setDescription(`Game based on ${contentName} content`);
+      setAiHint(contentName.split(' ').slice(0, 2).join(' '));
+      toast({
+        title: 'Content Selected',
+        description: `Creating game with questions from "${contentName}"`,
+      });
+    }
+  }, [searchParams, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,12 +77,16 @@ export default function MakeGameForm() {
     };
 
     try {
+      // First create the game
       const response = await fetch('/api/games', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(gameDataForFirestore),
+        body: JSON.stringify({
+          ...gameDataForFirestore,
+          contentId: selectedContentId // Include the content ID if selected
+        }),
       });
       
       if (!response.ok) {
@@ -72,7 +95,34 @@ export default function MakeGameForm() {
       
       const result = await response.json();
       const gameId = result.id;
-      toast({ title: 'Game Created!', description: `"${title}" has been created. Now add some questions.` });
+
+      // If content was selected, import its questions
+      if (selectedContentId) {
+        const questionsResponse = await fetch(`/api/games/${gameId}/questions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contentId: selectedContentId
+          }),
+        });
+
+        if (!questionsResponse.ok) {
+          throw new Error('Failed to import questions');
+        }
+
+        toast({ 
+          title: 'Game Created!', 
+          description: `"${title}" has been created with questions from the selected content.` 
+        });
+      } else {
+        toast({ 
+          title: 'Game Created!', 
+          description: `"${title}" has been created. Now add some questions.` 
+        });
+      }
+
       router.push(`/edit-game/${gameId}?name=${encodeURIComponent(title)}`);
     } catch (error) {
       console.error("Failed to create game:", error);

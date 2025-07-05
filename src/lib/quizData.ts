@@ -89,6 +89,6 @@ export const TOPICS: Topic[] = [
   }
 ];
 
-export const GRID_SIZES = [8, 15, 16, 24]; // Added 15
+export const GRID_SIZES = [4, 6, 8, 15, 16, 24]; // Added 4 and 6 for smaller grids
 export const MIN_TEAMS = 2;
 export const MAX_TEAMS = 6;

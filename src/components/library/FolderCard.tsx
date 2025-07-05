@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import Image from 'next/image';
 import { Folder as FolderIcon, MoreHorizontal } from 'lucide-react';
 import { Button } from '../ui/button';
+import '@/styles/figma-design-system.css';
 
 interface FolderCardProps {
   folder: Folder;
@@ -16,7 +17,7 @@ export default function FolderCard({ folder }: FolderCardProps) {
   const hint = folder.aiHint || folder.name.split(' ').slice(0,2).join(' ').toLowerCase() || "abstract pattern";
 
   return (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
+    <Card className="figma-topic-card overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
       <CardHeader className="p-0 relative aspect-video bg-muted flex items-center justify-center">
         {/* Always render Image component but source can be placeholder */}
         <Image

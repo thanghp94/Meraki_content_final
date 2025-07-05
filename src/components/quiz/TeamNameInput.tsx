@@ -4,9 +4,17 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Lightbulb, Loader2 } from 'lucide-react';
-import { suggestTeamNames as suggestTeamNamesAI } from '@/ai/flows/suggest-team-names';
+import { Shuffle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+// 20 cute team names suitable for children
+const CUTE_TEAM_NAMES = [
+  'Rainbow Stars', 'Happy Pandas', 'Sunny Butterflies', 'Magic Unicorns',
+  'Brave Lions', 'Smart Owls', 'Friendly Dolphins', 'Giggling Penguins',
+  'Dancing Bears', 'Flying Eagles', 'Bouncing Bunnies', 'Shining Diamonds',
+  'Cheerful Monkeys', 'Colorful Parrots', 'Playful Puppies', 'Smiling Suns',
+  'Twinkling Stars', 'Jumping Frogs', 'Swimming Fish', 'Running Horses'
+];
 
 interface TeamNameInputProps {
   teamNumber: number;
@@ -15,26 +23,14 @@ interface TeamNameInputProps {
   topicForSuggestion: string;
 }
 
-export default function TeamNameInput({ teamNumber, value, onChange, topicForSuggestion }: TeamNameInputProps) {
-  const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
+export default function TeamNameInput({ teamNumber, value, onChange }: TeamNameInputProps) {
   const { toast } = useToast();
 
-  const handleSuggestName = async () => {
-    setIsLoadingSuggestion(true);
-    try {
-      const result = await suggestTeamNamesAI({ topic: topicForSuggestion, numberOfTeams: 1 });
-      if (result.teamNames && result.teamNames.length > 0) {
-        onChange(result.teamNames[0]);
-        toast({ title: "Suggestion applied!", description: `Suggested name: ${result.teamNames[0]}`});
-      } else {
-        toast({ title: "No suggestions", description: "AI couldn't find a name, please try again or enter manually.", variant: "default" });
-      }
-    } catch (error) {
-      console.error("Failed to suggest team name:", error);
-      toast({ title: "Suggestion Error", description: "Could not fetch team name suggestion.", variant: "destructive" });
-    } finally {
-      setIsLoadingSuggestion(false);
-    }
+  const handleRandomCuteName = () => {
+    const randomIndex = Math.floor(Math.random() * CUTE_TEAM_NAMES.length);
+    const randomName = CUTE_TEAM_NAMES[randomIndex];
+    onChange(randomName);
+    toast({ title: "Cute name applied!", description: `Random name: ${randomName}`});
   };
 
   return (
@@ -47,20 +43,17 @@ export default function TeamNameInput({ teamNumber, value, onChange, topicForSug
           placeholder={`Enter name for Team ${teamNumber}`}
           value={value}
           onChange={e => onChange(e.target.value)}
+          className="flex-1"
         />
         <Button
           type="button"
           variant="outline"
-          onClick={handleSuggestName}
-          disabled={isLoadingSuggestion}
-          title="Suggest a team name using AI"
+          size="sm"
+          onClick={handleRandomCuteName}
+          title="Get a random cute team name"
         >
-          {isLoadingSuggestion ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Lightbulb className="h-4 w-4" />
-          )}
-          <span className="ml-2 hidden sm:inline">Suggest</span>
+          <Shuffle className="h-4 w-4" />
+          <span className="ml-1 hidden sm:inline">Cute</span>
         </Button>
       </div>
     </div>

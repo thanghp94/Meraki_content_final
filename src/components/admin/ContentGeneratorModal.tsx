@@ -81,7 +81,11 @@ export function ContentGeneratorModal({
           infor2: generatedContent.summary,
           topicid: topicId,
           image1: '',
+          image2: '',
           video1: '',
+          video2: '',
+          visible: true,
+          order_index: null
         }),
       });
 

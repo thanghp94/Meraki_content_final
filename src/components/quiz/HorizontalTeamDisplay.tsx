@@ -15,35 +15,51 @@ interface HorizontalTeamDisplayProps {
 
 export default function HorizontalTeamDisplay({ teams, currentTeamId, onEndGame }: HorizontalTeamDisplayProps) {
   return (
-    <div className="bg-game-header text-game-header-foreground p-3 shadow-md w-full">
-      <div className="container mx-auto flex items-center justify-between gap-4">
-        {/* Teams Display - takes up most of the space and centers its content */}
-        <div className="flex items-center justify-center space-x-3 sm:space-x-4 overflow-x-auto flex-grow">
+    <div className="bg-game-header text-game-header-foreground p-3 shadow-md w-full min-h-[120px] relative">
+      <div className="container mx-auto flex items-center justify-center gap-4 h-full">
+        {/* Teams Display - centered in the row */}
+        <div className="flex items-center justify-center gap-4 flex-wrap flex-1">
           {teams.map((team) => (
             <div
               key={team.id}
               className={cn(
-                "flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-300 min-w-[90px] sm:min-w-[110px]",
+                "flex flex-col items-center justify-center py-3 px-6 rounded-lg transition-all duration-300",
                 team.id === currentTeamId 
                   ? "bg-current-team-highlight text-current-team-highlight-foreground shadow-lg scale-105" 
                   : "" // No special background for non-current teams
               )}
+              style={{
+                minWidth: 'min(150px, 25vw)'
+              }}
             >
-              <span className={cn(
-                "text-base sm:text-lg font-bold truncate max-w-[100px] sm:max-w-[150px]",
-                team.id === currentTeamId ? "text-current-team-highlight-foreground" : "text-game-header-foreground"
-              )}>{team.name}</span>
-              <span className={cn(
-                "text-xl sm:text-2xl font-extrabold",
-                 team.id === currentTeamId ? "text-current-team-highlight-foreground" : "text-game-header-foreground"
-              )}>{team.score}</span>
+              <span 
+                className={cn(
+                  "font-bold whitespace-nowrap",
+                  team.id === currentTeamId ? "text-current-team-highlight-foreground" : "text-game-header-foreground"
+                )}
+                style={{
+                  fontSize: 'clamp(1.25rem, 3vmin, 2rem)'
+                }}
+              >
+                {team.name}
+              </span>
+              <span 
+                className={cn(
+                  "font-extrabold",
+                  team.id === currentTeamId ? "text-current-team-highlight-foreground" : "text-game-header-foreground"
+                )}
+                style={{
+                  fontSize: 'clamp(2rem, 4vmin, 3rem)'
+                }}
+              >
+                {team.score}
+              </span>
             </div>
           ))}
         </div>
 
-        {/* End Game Button - on the right */}
-        <div className="flex items-center flex-shrink-0">
-            {/* Topic Name span removed */}
+        {/* End Game Button - positioned absolutely in top right */}
+        <div className="absolute top-3 right-3">
             <Button
                 variant="ghost"
                 size="icon"

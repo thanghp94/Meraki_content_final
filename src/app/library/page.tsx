@@ -10,12 +10,13 @@ import { FolderPlus, Loader2, Search, BookOpen, Folder as FolderIcon } from 'luc
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
+import '@/styles/figma-design-system.css';
 
 export default function LibraryPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'units' | 'folders'>('units');
+  const [activeFilter, setActiveFilter] = useState<'grapeseed' | 'tath' | 'folders'>('grapeseed');
   
   const [folders, setFolders] = useState<Folder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,6 +101,42 @@ export default function LibraryPage() {
     }
   };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-10">
+          <Loader2 size={64} className="mb-4 animate-spin" />
+          <h2 className="text-2xl font-semibold mb-2">Loading Library...</h2>
+          <p>Fetching your content and folders.</p>
+        </div>
+      );
+    }
+
+    switch (activeFilter) {
+      case 'grapeseed':
+        return <TopicsByUnit programFilter="Grapeseed" />;
+      case 'tath':
+        return <TopicsByUnit programFilter="TATH" />;
+      case 'folders':
+        return filteredItems.length > 0 ? (
+          <LibraryGrid items={filteredItems} />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-10">
+            <FolderPlus size={64} className="mb-4" />
+            <h2 className="text-2xl font-semibold mb-2">No folders found</h2>
+            <p className="mb-6">
+              {!searchTerm ? "Your library is empty. Try creating a new folder!" : "Try adjusting your search."}
+            </p>
+            {searchTerm && (
+              <Button variant="outline" onClick={() => setSearchTerm('')}>Clear Search</Button>
+            )}
+          </div>
+        );
+      default:
+        return <TopicsByUnit programFilter="Grapeseed" />;
+    }
+  };
+
   return (
     <div className="flex flex-col h-full min-h-screen">
       <Header />
@@ -109,12 +146,20 @@ export default function LibraryPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">
             <Button
-              variant={activeFilter === 'units' ? 'default' : 'outline'}
-              onClick={() => setActiveFilter('units')}
+              variant={activeFilter === 'grapeseed' ? 'default' : 'outline'}
+              onClick={() => setActiveFilter('grapeseed')}
               className="flex items-center gap-2"
             >
               <BookOpen className="h-4 w-4" />
-              View by Unit
+              Grapeseed
+            </Button>
+            <Button
+              variant={activeFilter === 'tath' ? 'default' : 'outline'}
+              onClick={() => setActiveFilter('tath')}
+              className="flex items-center gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              Tiếng Anh Tiểu Học
             </Button>
             <Button
               variant={activeFilter === 'folders' ? 'default' : 'outline'}
@@ -157,28 +202,7 @@ export default function LibraryPage() {
 
         {/* Main Content */}
         <main className="w-full">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-10">
-              <Loader2 size={64} className="mb-4 animate-spin" />
-              <h2 className="text-2xl font-semibold mb-2">Loading Library...</h2>
-              <p>Fetching your content and folders.</p>
-            </div>
-          ) : activeFilter === 'units' ? (
-            <TopicsByUnit />
-          ) : filteredItems.length > 0 ? (
-            <LibraryGrid items={filteredItems} />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-10">
-              <FolderPlus size={64} className="mb-4" />
-              <h2 className="text-2xl font-semibold mb-2">No folders found</h2>
-              <p className="mb-6">
-                {!searchTerm ? "Your library is empty. Try creating a new folder!" : "Try adjusting your search."}
-              </p>
-              {searchTerm && (
-                <Button variant="outline" onClick={() => setSearchTerm('')}>Clear Search</Button>
-              )}
-            </div>
-          )}
+          {renderContent()}
         </main>
       </div>
     </div>

@@ -11,8 +11,8 @@ interface LibrarySidebarProps {
   className?: string;
   style?: React.CSSProperties;
   onSearch: (term: string) => void;
-  activeFilter: 'all' | 'folders' | 'content' | 'units';
-  onFilterChange: (filter: 'all' | 'folders' | 'content' | 'units') => void;
+  activeFilter: 'all' | 'folders' | 'content' | 'grapeseed' | 'tath';
+  onFilterChange: (filter: 'all' | 'folders' | 'content' | 'grapeseed' | 'tath') => void;
   onNewFolder: () => void;
   folderCount: number;
   isCreatingFolder: boolean;
@@ -70,12 +70,20 @@ export default function LibrarySidebar({
           Content
         </Button>
         <Button
-          variant={activeFilter === 'units' ? 'secondary' : 'ghost'}
-          className={`w-full justify-start button ${activeFilter === 'units' ? 'button--secondary' : 'button--outline'}`}
-          onClick={() => onFilterChange('units')}
+          variant={activeFilter === 'grapeseed' ? 'secondary' : 'ghost'}
+          className={`w-full justify-start button ${activeFilter === 'grapeseed' ? 'button--secondary' : 'button--outline'}`}
+          onClick={() => onFilterChange('grapeseed')}
         >
           <BookOpen className="mr-2 h-4 w-4" />
-          View by Unit
+          Grapeseed
+        </Button>
+        <Button
+          variant={activeFilter === 'tath' ? 'secondary' : 'ghost'}
+          className={`w-full justify-start button ${activeFilter === 'tath' ? 'button--secondary' : 'button--outline'}`}
+          onClick={() => onFilterChange('tath')}
+        >
+          <BookOpen className="mr-2 h-4 w-4" />
+          Tiếng Anh Tiểu Học
         </Button>
       </div>
 

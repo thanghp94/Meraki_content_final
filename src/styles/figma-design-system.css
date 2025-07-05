@@ -1,0 +1,144 @@
+/**
+ * Figma Design System CSS
+ * 
+ * This file contains CSS specifications exported from Figma designs
+ * to maintain consistency across the application and serve as a reference
+ * for future revisions.
+ */
+
+/* =============================================================================
+   FIGMA FRAME SPECIFICATIONS
+   ============================================================================= */
+
+/**
+ * Main Container Frame
+ * Original Figma CSS:
+ * - width: 1440px
+ * - height: 1440px
+ * - background: #FFFFFF
+ * - border: 2px solid #CED4DA
+ * - border-radius: 8px
+ * - display: flex
+ * - flex-direction: column
+ * - align-items: flex-start
+ * - padding: 0px (adjusted to 24px for better UX)
+ */
+.figma-main-frame {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px;
+  position: relative;
+  width: 100%;
+  max-width: 1440px;
+  min-height: 600px;
+  background: #FFFFFF;
+  border: 2px solid #CED4DA;
+  border-radius: 8px;
+  gap: 16px;
+  margin: 0 auto;
+}
+
+/* =============================================================================
+   TAILWIND CSS EQUIVALENTS
+   ============================================================================= */
+
+/**
+ * Tailwind classes that replicate the Figma design:
+ * 
+ * .figma-main-frame-tailwind {
+ *   @apply box-border flex flex-col items-start p-6 relative w-full max-w-[1440px] min-h-[600px] bg-white border-2 border-gray-300 rounded-lg space-y-4 mx-auto;
+ * }
+ */
+
+/* =============================================================================
+   DESIGN TOKENS FROM FIGMA
+   ============================================================================= */
+
+:root {
+  /* Colors */
+  --figma-white: #FFFFFF;
+  --figma-border-gray: #CED4DA;
+  
+  /* Dimensions */
+  --figma-max-width: 1440px;
+  --figma-min-height: 600px;
+  --figma-border-width: 2px;
+  --figma-border-radius: 8px;
+  --figma-padding: 24px;
+  --figma-gap: 16px;
+}
+
+/* =============================================================================
+   COMPONENT-SPECIFIC FIGMA STYLES
+   ============================================================================= */
+
+/**
+ * Topic Cards - Custom styling that complements Figma design
+ */
+.figma-topic-card {
+  background: var(--figma-white);
+  border: 1px solid var(--figma-border-gray);
+  border-radius: var(--figma-border-radius);
+  padding: 16px;
+}
+
+/**
+ * Content Cards - Distinguishable from topic cards
+ */
+.figma-content-card {
+  background: linear-gradient(to right, #FFF7ED, #FFFBEB);
+  border: 1px solid #FED7AA;
+  border-left: 4px solid #FB923C;
+  border-radius: var(--figma-border-radius);
+  padding: 16px;
+}
+
+/* =============================================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================================= */
+
+/**
+ * Responsive adjustments while maintaining Figma design integrity
+ */
+@media (max-width: 768px) {
+  .figma-main-frame {
+    max-width: 100%;
+    padding: 16px;
+    margin: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .figma-main-frame {
+    padding: 12px;
+    margin: 0 8px;
+  }
+}
+
+/* =============================================================================
+   USAGE NOTES
+   ============================================================================= */
+
+/**
+ * HOW TO USE THIS FILE:
+ * 
+ * 1. Import in your component:
+ *    import '@/styles/figma-design-system.css';
+ * 
+ * 2. Use CSS classes:
+ *    <div className="figma-main-frame">
+ * 
+ * 3. Use CSS variables:
+ *    style={{ borderColor: 'var(--figma-border-gray)' }}
+ * 
+ * 4. Reference for Tailwind:
+ *    className="box-border flex flex-col items-start p-6 relative w-full max-w-[1440px]..."
+ * 
+ * FUTURE FIGMA IMPORTS:
+ * - Add new Figma CSS specifications below
+ * - Maintain the same structure and documentation
+ * - Update design tokens as needed
+ * - Keep Tailwind equivalents for consistency
+ */

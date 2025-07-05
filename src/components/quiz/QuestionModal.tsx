@@ -6,6 +6,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
 import ContentRenderer from './ContentRenderer';
+import TextToSpeechButton from '@/components/ui/text-to-speech-button';
 
 // Helper function to play sound
 const playSound = (soundFile: string) => {
@@ -63,25 +64,44 @@ export default function QuestionModal() {
     <Dialog open={!!activeQuestion} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent className="!fixed !inset-0 !w-screen !h-screen !translate-x-0 !translate-y-0 !left-0 !top-0 bg-card shadow-2xl rounded-none p-0 overflow-hidden flex flex-col max-w-none">
         {/* Points Header - Responsive with viewport units */}
-        <div className="bg-primary text-primary-foreground p-[2vh] flex justify-center items-center">
+        <div className="bg-primary text-primary-foreground p-[2vh] flex justify-center items-center relative">
           <h1 className="text-[4vw] md:text-[3vw] lg:text-[2.5vw] font-bold">{activeQuestion.points}</h1>
+          {/* TTS for entire question */}
+          <div className="absolute right-[2vh] top-1/2 transform -translate-y-1/2">
+            <TextToSpeechButton
+              text={`Question for ${activeQuestion.points} points: ${activeQuestion.questionText}. ${
+                activeQuestion.cauTraLoi1 ? `Option A: ${activeQuestion.cauTraLoi1}. ` : ''
+              }${
+                activeQuestion.cauTraLoi2 ? `Option B: ${activeQuestion.cauTraLoi2}. ` : ''
+              }${
+                activeQuestion.cauTraLoi3 ? `Option C: ${activeQuestion.cauTraLoi3}. ` : ''
+              }${
+                activeQuestion.cauTraLoi4 ? `Option D: ${activeQuestion.cauTraLoi4}.` : ''
+              }`}
+              variant="ghost"
+              size="sm"
+              className="text-primary-foreground hover:bg-primary-foreground/20"
+              iconOnly={true}
+              rate={0.9}
+            />
+          </div>
         </div>
         
         {/* Main Content Area - Flexbox layout */}
-        <div className="flex-1 flex flex-col p-[2vh] overflow-y-auto relative z-10">
+        <div className="flex-1 flex flex-col p-[2vh] overflow-y-auto relative">
           {/* Question Text - Improved responsive typography */}
-          <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground text-center mb-[3vh] leading-tight">
+          <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground text-center mb-[3vh] leading-tight relative z-30">
             <ContentRenderer 
               content={activeQuestion.questionText}
               textClassName="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground text-center leading-tight"
-              imageClassName="w-full max-h-[25vh] my-[2vh]"
+              imageClassName="w-full max-h-[25vh] my-[2vh] relative z-30"
               alt="Question content"
             />
           </div>
 
           {/* Question Media - Responsive sizing */}
           {media && (media.type === 'image' || media.type === 'gif') && (
-            <div className="w-full max-w-[80vw] mx-auto aspect-video mb-[2vh] rounded-md overflow-hidden shadow-md bg-muted relative z-20">
+            <div className="w-full max-w-[80vw] mx-auto aspect-video mb-[2vh] rounded-md overflow-hidden shadow-md bg-muted relative z-30">
               <img
                 src={media.url}
                 alt={media.alt || "Question media"}
@@ -92,7 +112,7 @@ export default function QuestionModal() {
 
           {/* Answer Choices Grid - Adaptive layout */}
           {(activeQuestion.cauTraLoi1 || activeQuestion.cauTraLoi2 || activeQuestion.cauTraLoi3 || activeQuestion.cauTraLoi4) && (
-            <div className={`w-full grid gap-[2vh] mt-[3vh] relative z-10 ${
+            <div className={`w-full grid gap-[2vh] mt-[3vh] relative z-20 ${
               hasImageChoices 
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' 
                 : 'grid-cols-1 md:grid-cols-2'

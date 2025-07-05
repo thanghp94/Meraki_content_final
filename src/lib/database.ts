@@ -7,6 +7,11 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
+// Set the search path to use meraki schema
+pool.on('connect', (client) => {
+  client.query('SET search_path TO meraki, public');
+});
+
 export const db = drizzle(pool, { schema });
 
 export default db;
