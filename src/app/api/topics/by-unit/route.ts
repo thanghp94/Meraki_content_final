@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
           topic,
           short_summary,
           image
-        FROM meraki.topic
-        WHERE unit = ${unitFilter} AND program = 'Grapeseed' AND visible IS NOT FALSE
+        FROM topic
+        WHERE unit = ${unitFilter} AND program = 'Grapeseed'
         ORDER BY COALESCE(order_index, 999999), topic
       `);
 
@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
           topic,
           short_summary,
           image
-        FROM meraki.topic
-        WHERE unit = ${unitFilter} AND program = 'TATH' AND visible IS NOT FALSE
+        FROM topic
+        WHERE unit = ${unitFilter} AND program = 'TATH'
         ORDER BY COALESCE(order_index, 999999), topic
       `);
 
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
             'image', image
           ) ORDER BY COALESCE(order_index, 999999), topic
         ) as topics
-      FROM meraki.topic
+      FROM topic
       ${sql.raw(whereClause)}
       GROUP BY unit
       ORDER BY 

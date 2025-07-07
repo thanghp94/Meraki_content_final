@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // Debug the raw SQL result
     const rawResult = await db.execute(sql`
       SELECT id, noi_dung, cau_tra_loi_1, cau_tra_loi_2, correct_choice, answer, contentid
-      FROM meraki.question 
+      FROM question
       WHERE contentid = ${contentId}
       LIMIT 1
     `);

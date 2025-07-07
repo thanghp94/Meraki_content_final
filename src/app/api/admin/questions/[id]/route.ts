@@ -7,6 +7,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await Promise.resolve(params);
     const body = await request.json();
     const {
       chuong_trinh,
@@ -27,7 +28,7 @@ export async function PUT(
     } = body;
 
     await db.execute(sql`
-      UPDATE question
+      UPDATE meraki.question
       SET 
         chuong_trinh = ${chuong_trinh},
         questionlevel = ${questionlevel},
@@ -44,7 +45,7 @@ export async function PUT(
         time = ${time},
         explanation = ${explanation},
         answer = ${answer}
-      WHERE id = ${params.id}
+      WHERE id = ${id}
     `);
 
     return NextResponse.json({ message: 'Question updated successfully' });
@@ -55,19 +56,21 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    await db.execute(sql`
-      DELETE FROM question
-      WHERE id = ${params.id}
-    `);
+    const { id } = await Promise.resolve(params);
 
-    return NextResponse.json({ message: 'Question deleted successfully' });
+    await db.execute(sql`DELETE FROM meraki.question WHERE id = ${id}`);
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting question:', error);
-    return NextResponse.json({ error: 'Failed to delete question' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to delete question' },
+      { status: 500 }
+    );
   }
 }
 
@@ -95,7 +98,7 @@ export async function GET(
         explanation,
         answer,
         tg_tao
-      FROM question
+      FROM meraki.question
       WHERE id = ${params.id}
     `);
 
@@ -109,3 +112,4 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to fetch question' }, { status: 500 });
   }
 }
+

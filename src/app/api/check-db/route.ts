@@ -7,7 +7,7 @@ export async function GET() {
     // Check what's actually in the database
     const result = await db.execute(sql`
       SELECT id, noi_dung, cau_tra_loi_1, cau_tra_loi_2, correct_choice, answer, contentid
-      FROM meraki.question 
+      FROM question
       WHERE contentid = '3404f277-207d-42ad-9577-af35e51b10c0'
       LIMIT 3
     `);

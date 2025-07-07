@@ -8,14 +8,14 @@ export async function POST() {
     
     // Add visible column (default to true to match existing showstudent behavior)
     await db.execute(sql`
-      ALTER TABLE meraki.topic 
+      ALTER TABLE topic 
       ADD COLUMN IF NOT EXISTS visible BOOLEAN DEFAULT true
     `);
     console.log('✅ Added visible column to topic table');
     
     // Add order_index column
     await db.execute(sql`
-      ALTER TABLE meraki.topic 
+      ALTER TABLE topic 
       ADD COLUMN IF NOT EXISTS order_index INTEGER
     `);
     console.log('✅ Added order_index column to topic table');
@@ -35,7 +35,7 @@ export async function POST() {
         showstudent,
         visible,
         order_index
-      FROM meraki.topic 
+      FROM topic
       LIMIT 1
     `);
     

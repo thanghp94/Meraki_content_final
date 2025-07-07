@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, ChevronLeft, ChevronRight, Play, Volume2, Expand } from 'lucide-react';
@@ -46,6 +46,7 @@ function MediaModal({ isOpen, onClose, type, url, title }: MediaModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+        <DialogTitle className="sr-only">Content Viewer</DialogTitle>
         <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
           <Button
             variant="ghost"
@@ -148,6 +149,7 @@ export default function ContentViewModal({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-6xl w-full h-[90vh] p-0">
+          <DialogTitle className="sr-only">Content Viewer</DialogTitle>
           <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b bg-blue-600 text-white">

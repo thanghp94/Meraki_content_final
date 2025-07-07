@@ -7,6 +7,7 @@ import type { PowerUpId } from '@/types/powerups';
 import { TOPICS } from '@/lib/quizData';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 import { activatePowerUp as activatePowerUpService } from '@/lib/powerUpService';
+import { getQuestionPoints } from '@/lib/pointsService';
 
 // Helper to shuffle an array
 function shuffleArray<T>(array: T[]): T[] {
@@ -189,7 +190,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       if (isCorrect && tile.question) {
         updatedTeams[prev.currentTeamTurnIndex] = {
           ...currentTeam,
-          score: currentTeam.score + tile.question.points,
+          score: currentTeam.score + getQuestionPoints(tile.question),
         };
       }
       

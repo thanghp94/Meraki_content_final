@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import ContentViewModal from '@/components/ui/content-view-modal';
+import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import Link from 'next/link';
 import { ArrowLeft, Eye, BookOpen, Image, Video } from 'lucide-react';
 

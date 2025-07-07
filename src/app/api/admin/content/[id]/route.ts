@@ -10,10 +10,10 @@ export async function PUT(
   
   try {
     const body = await request.json();
-    const { title, infor1, infor2, image1, image2, video1, video2, topicid, visible, order_index } = body;
+    const { title, infor1, infor2, image1, image2, video1, video2, topicid } = body;
 
     await db.execute(sql`
-      UPDATE content
+      UPDATE meraki.content
       SET 
         "Title" = ${title},
         infor1 = ${infor1},
@@ -22,9 +22,7 @@ export async function PUT(
         image2 = ${image2 || ''},
         video1 = ${video1},
         video2 = ${video2 || ''},
-        topicid = ${topicid},
-        visible = ${visible !== undefined ? visible : true},
-        order_index = ${order_index}
+        topicid = ${topicid}
       WHERE id = ${id}
     `);
 
@@ -43,7 +41,7 @@ export async function DELETE(
   
   try {
     await db.execute(sql`
-      DELETE FROM content
+      DELETE FROM meraki.content
       WHERE id = ${id}
     `);
 
@@ -76,7 +74,7 @@ export async function GET(
         c.topicid,
         c.visible,
         c.order_index
-      FROM content c
+      FROM meraki.content c
       WHERE c.id = ${id}
     `);
 
@@ -106,34 +104,31 @@ export async function GET(
         q.explanation,
         q.answer,
         q.tg_tao
-      FROM question q
+      FROM meraki.question q
       WHERE q.contentid = ${id}
       ORDER BY q.tg_tao ASC, q.id ASC
     `);
 
     const questions = questionsResult.rows.map(row => ({
       id: row.id as string,
-      topic: row.chuong_trinh as string,
-      questionLevel: row.questionlevel as string,
-      contentId: row.contentid as string,
-      questionType: (row.question_type as string) || 'text',
-      questionText: (row.noi_dung as string) || '',
+      chuong_trinh: row.chuong_trinh as string,
+      questionlevel: row.questionlevel as string,
+      contentid: row.contentid as string,
+      question_type: (row.question_type as string) || 'text',
+      noi_dung: (row.noi_dung as string) || '',
       video: row.video as string,
       picture: row.picture as string,
-      cauTraLoi1: row.cau_tra_loi_1 as string,
-      cauTraLoi2: row.cau_tra_loi_2 as string,
-      cauTraLoi3: row.cau_tra_loi_3 as string,
-      cauTraLoi4: row.cau_tra_loi_4 as string,
-      correctChoice: row.correct_choice as string,
+      cau_tra_loi_1: row.cau_tra_loi_1 as string,
+      cau_tra_loi_2: row.cau_tra_loi_2 as string,
+      cau_tra_loi_3: row.cau_tra_loi_3 as string,
+      cau_tra_loi_4: row.cau_tra_loi_4 as string,
+      correct_choice: row.correct_choice as string,
       time: parseInt(row.time as string) || 30,
       explanation: row.explanation as string,
       answer: row.answer as string,
-      points: 10, // Default points
-      type: 'WSC', // Default type
-      createdAt: row.tg_tao as string,
-      // Map picture to mediaUrl if exists
-      mediaUrl: row.picture as string,
-      mediaType: row.picture ? 'image' as const : undefined,
+      tg_tao: row.tg_tao as string,
+      visible: true,
+      order_index: 0
     }));
 
     return NextResponse.json({

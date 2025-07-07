@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { GameProvider } from '@/contexts/GameContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 
 const geistSans = Geist({
@@ -29,14 +30,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`}>
-        <GameProvider>
-          {/* Header might be conditional based on route in more complex apps */}
-          {/* <Header /> */} 
-          <main className="flex-grow"> {/* Removed container and padding to allow pages to control their own layout fully */}
-            {children}
-          </main>
-          <Toaster />
-        </GameProvider>
+        <AuthProvider>
+          <GameProvider>
+            {/* Header might be conditional based on route in more complex apps */}
+            {/* <Header /> */} 
+            <main className="flex-grow"> {/* Removed container and padding to allow pages to control their own layout fully */}
+              {children}
+            </main>
+            <Toaster />
+          </GameProvider>
+        </AuthProvider>
       </body>
     </html>
   );

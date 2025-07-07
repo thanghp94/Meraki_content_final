@@ -23,6 +23,8 @@ import { ContentGeneratorModal } from './ContentGeneratorModal';
 import { ImageSearchModal } from './ImageSearchModal';
 import { YouTubeSearchModal } from './YouTubeSearchModal';
 import ContentInput from './ContentInput';
+import AdminQuestionDialog from './AdminQuestionDialog';
+import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import { ContentData, EnhancedFormData, parseContentData, stringifyContentData } from '@/types/question';
 
 interface Topic {
@@ -93,6 +95,8 @@ export default function TopicManagement() {
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [selectedContentForView, setSelectedContentForView] = useState<Content | null>(null);
   const [selectedTopicForContent, setSelectedTopicForContent] = useState<string>('');
   const [selectedContentForQuestion, setSelectedContentForQuestion] = useState<string>('');
   const [selectedContentForAI, setSelectedContentForAI] = useState<{ id: string; title: string } | null>(null);
@@ -209,12 +213,27 @@ export default function TopicManagement() {
       const response = await fetch(`/api/admin/content/${contentId}`);
       if (!response.ok) throw new Error('Failed to fetch questions');
       const data = await response.json();
-      setQuestions(prev => ({
-        ...prev,
-        [contentId]: data.questions || []
-      }));
+      
+      // Replace the entire questions array for this content
+      setQuestions(prev => {
+        const newQuestions = { ...prev };
+        newQuestions[contentId] = data.questions || [];
+        return newQuestions;
+      });
+      
+      // Ensure the content is expanded to show updated questions
+      setExpandedContent(prev => {
+        const newExpanded = new Set(prev);
+        newExpanded.add(contentId);
+        return newExpanded;
+      });
     } catch (error) {
       console.error('Error fetching questions:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to refresh questions',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -343,6 +362,7 @@ export default function TopicManagement() {
 
       if (!response.ok) {
         const errorData = await response.text();
+        // eslint-disable-next-line no-console
         console.error('API Error:', errorData);
         throw new Error('Failed to save topic');
       }
@@ -408,6 +428,12 @@ export default function TopicManagement() {
     setIsLoading(true);
 
     try {
+      // Get the contentId before we reset the form
+      const contentId = editingQuestion?.contentid || selectedContentForQuestion;
+      if (!contentId) {
+        throw new Error('Content ID is required');
+      }
+      
       const url = editingQuestion 
         ? `/api/admin/questions/${editingQuestion.id}`
         : '/api/admin/questions';
@@ -415,6 +441,7 @@ export default function TopicManagement() {
       // Transform enhanced form data back to API format
       const apiData = {
         ...questionFormData,
+        contentid: contentId, // Use the stored contentId
         noi_dung: stringifyContentData(questionFormData.questionContent),
         cau_tra_loi_1: stringifyContentData(questionFormData.choice1Content),
         cau_tra_loi_2: stringifyContentData(questionFormData.choice2Content),
@@ -430,17 +457,20 @@ export default function TopicManagement() {
 
       if (!response.ok) throw new Error('Failed to save question');
 
+      const result = await response.json();
+      
+      // Show success message
       toast({
         title: editingQuestion ? 'Question Updated' : 'Question Created',
         description: `Successfully ${editingQuestion ? 'updated' : 'created'} the question.`,
       });
 
+      // Force refresh the questions for this content
+      await fetchQuestionsForContent(contentId);
+      
+      // Close dialog and reset form after successful update
       setIsQuestionDialogOpen(false);
       resetQuestionForm();
-      // Refresh the questions for the content
-      if (selectedContentForQuestion) {
-        await fetchQuestionsForContent(selectedContentForQuestion);
-      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -1523,24 +1553,22 @@ export default function TopicManagement() {
                                     )}
                                   </div>
                                   <div>
-                                    <div className="flex items-center gap-2">
-                                      <h3 className="font-semibold text-base">{topic.topic}</h3>
-                                      {topic.showstudent ? (
-                                        <Eye className="h-4 w-4 text-green-600" />
-                                      ) : (
-                                        <EyeOff className="h-4 w-4 text-gray-400" />
-                                      )}
-                                    </div>
+                                        <div className="flex items-center gap-2">
+                                          <div className="flex items-center gap-2">
+                                            <h3 className="font-semibold text-base">{topic.topic}</h3>
+                                            <Badge variant="outline" className="text-xs">
+                                              {topicContent.length} items
+                                            </Badge>
+                                          </div>
+                                         
+                                        </div>
                                     {topic.short_summary && (
-                                      <p className="text-sm text-gray-600 mt-1">{topic.short_summary}</p>
-                                    )}
+                                      <p className="text-sm text-gray-600 mt-1 truncate">{topic.short_summary}...</p>
+                                      )}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Badge variant="outline">
-                                    {topicContent.length} content items
-                                  </Badge>
-                                  <div className="flex items-center gap-1">
+                                    <div className="grid grid-cols-4 gap-0.5">
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -1548,10 +1576,10 @@ export default function TopicManagement() {
                                         e.stopPropagation();
                                         handleMoveTopicUp(topic.id, unit);
                                       }}
-                                      className="h-8 w-8 p-0"
+                                      className="h-4 w-4 p-0"
                                       title="Move Topic Up"
                                     >
-                                      <ArrowUp className="h-4 w-4" />
+                                      <ArrowUp className="h-3 w-3" />
                                     </Button>
                                     <Button
                                       variant="ghost"
@@ -1689,10 +1717,10 @@ export default function TopicManagement() {
                                                   <FileText className="h-3 w-3 text-blue-600" />
                                                 </div>
                                                 <div>
-                                                  <h4 className="font-medium text-sm">{contentItem.title}</h4>
-                                                </div>
+                                                <h4 className="font-medium text-sm truncate">{contentItem.title}...</h4>
+                                                <p className="text-xs text-gray-500 truncate">{contentItem.infor1}...</p>                                                </div>
                                               </div>
-                                                <div className="flex items-center gap-1">
+                                                <div className="grid grid-cols-4 gap-0.5">
                                                 <Button
                                                   variant="ghost"
                                                   size="sm"
@@ -1700,7 +1728,7 @@ export default function TopicManagement() {
                                                     e.stopPropagation();
                                                     handleMoveContentUp(contentItem.id, topic.id);
                                                   }}
-                                                  className="h-5 w-5 p-0"
+                                                  className="h-4 w-4 p-0"
                                                   title="Move Up"
                                                 >
                                                   <ArrowUp className="h-3 w-3" />
@@ -1712,7 +1740,7 @@ export default function TopicManagement() {
                                                     e.stopPropagation();
                                                     handleMoveContentDown(contentItem.id, topic.id);
                                                   }}
-                                                  className="h-5 w-5 p-0"
+                                                  className="h-4 w-4 p-0"
                                                   title="Move Down"
                                                 >
                                                   <ArrowDown className="h-3 w-3" />
@@ -1725,7 +1753,7 @@ export default function TopicManagement() {
                                                     // Toggle visibility
                                                     handleToggleContentVisibility(contentItem.id);
                                                   }}
-                                                  className="h-5 w-5 p-0"
+                                                  className="h-4 w-4 p-0"
                                                   title={(contentItem.visible !== false) ? "Hide Content" : "Show Content"}
                                                 >
                                                   {(contentItem.visible !== false) ? (
@@ -1739,9 +1767,21 @@ export default function TopicManagement() {
                                                   size="sm"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
+                                                    setSelectedContentForView(contentItem);
+                                                  }}
+                                                  className="h-4 w-4 p-0"
+                                                  title="View Content"
+                                                >
+                                                  <FileText className="h-3 w-3 text-blue-600" />
+                                                </Button>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
                                                     handleAddQuestion(contentItem.id);
                                                   }}
-                                                  className="h-6 w-6 p-0"
+                                                  className="h-4 w-4 p-0"
                                                   title="Add Question"
                                                 >
                                                   <Plus className="h-3 w-3" />
@@ -1753,7 +1793,7 @@ export default function TopicManagement() {
                                                     e.stopPropagation();
                                                     handleAIGenerate(contentItem.id, contentItem.title);
                                                   }}
-                                                  className="h-6 w-6 p-0 text-purple-600"
+                                                  className="h-4 w-4 p-0 text-purple-600"
                                                   title="AI Generate Questions"
                                                 >
                                                   <Sparkles className="h-3 w-3" />
@@ -1777,7 +1817,7 @@ export default function TopicManagement() {
                                                     e.stopPropagation();
                                                     handleDeleteContent(contentItem.id);
                                                   }}
-                                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                                  className="h-4 w-4 p-0 text-red-600 hover:text-red-700"
                                                   title="Delete Content"
                                                 >
                                                   <Trash2 className="h-3 w-3" />
@@ -1822,18 +1862,29 @@ export default function TopicManagement() {
                                             ) : (
                                               <div className="space-y-1">
                                                 {contentQuestions.map((question, index) => (
-                                                  <div key={question.id} className="flex items-center justify-between p-2 bg-white rounded border border-gray-100">
+                                                  <div 
+                                                  key={question.id} 
+                                                  className="flex items-center justify-between p-2 bg-white rounded border border-gray-100 cursor-pointer hover:bg-gray-50"
+                                                  onClick={() => setSelectedQuestion(question)}
+                                                >
                                                     <div className="flex items-center gap-2 flex-1">
                                                       <div className="flex items-center gap-1">
                                                         <GripVertical className="h-3 w-3 text-gray-400" />
                                                         <HelpCircle className="h-3 w-3 text-green-600" />
                                                       </div>
                                                       <div className="flex-1">
-                                                        <p className="text-xs font-medium line-clamp-2">
-                                                          {question.noi_dung}
+                                                      <p className="text-xs font-medium line-clamp-2">
+                                                          {(() => {
+                                                            try {
+                                                              const parsed = parseContentData(question.noi_dung);
+                                                              return parsed.text || question.noi_dung;
+                                                            } catch {
+                                                              return question.noi_dung;
+                                                            }
+                                                          })()}
                                                         </p>
                                                         <p className="text-xs text-gray-500 mt-1">
-                                                          Multiple Choice • Answer: {question.correct_choice}
+                                                          {question.cau_tra_loi_1 ? 'Multiple Choice' : 'Text'} • Answer: {question.correct_choice || 'N/A'}
                                                         </p>
                                                       </div>
                                                     </div>
@@ -1841,10 +1892,38 @@ export default function TopicManagement() {
                                                       <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => {
-                                                          // Edit question
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          setEditingQuestion(question);
+                                                          setSelectedContentForQuestion(question.contentid);
+                                                          setQuestionFormData({
+                                                            chuong_trinh: question.chuong_trinh || '',
+                                                            questionlevel: question.questionlevel || '',
+                                                            contentid: question.contentid,
+                                                            question_type: question.cau_tra_loi_1 ? 'multiple_choice' : 'text',
+                                                            questionContent: parseContentData(question.noi_dung),
+                                                            choice1Content: parseContentData(question.cau_tra_loi_1 || ''),
+                                                            choice2Content: parseContentData(question.cau_tra_loi_2 || ''),
+                                                            choice3Content: parseContentData(question.cau_tra_loi_3 || ''),
+                                                            choice4Content: parseContentData(question.cau_tra_loi_4 || ''),
+                                                            correct_choice: question.correct_choice || '',
+                                                            time: question.time || '',
+                                                            explanation: question.explanation || '',
+                                                            answer: question.answer || '',
+                                                            video: question.video || '',
+                                                            picture: question.picture || ''
+                                                          });
+                                                          
+                                                          // Ensure content section stays expanded
+                                                          setExpandedContent(prev => {
+                                                            const newExpanded = new Set(prev);
+                                                            newExpanded.add(question.contentid);
+                                                            return newExpanded;
+                                                          });
+                                                          
+                                                          setIsQuestionDialogOpen(true);
                                                         }}
-                                                        className="h-5 w-5 p-0"
+                                                                                                                className="h-5 w-5 p-0"
                                                         title="Edit Question"
                                                       >
                                                         <Pencil className="h-3 w-3" />
@@ -1852,10 +1931,31 @@ export default function TopicManagement() {
                                                       <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => {
-                                                          // Delete question
-                                                        }}
-                                                        className="h-5 w-5 p-0 text-red-600 hover:text-red-700"
+                                                        onClick={async () => {
+                                                          if (!confirm('Are you sure you want to delete this question?')) return;
+                                                          
+                                                          try {
+                                                            const response = await fetch(`/api/admin/questions/${question.id}`, {
+                                                              method: 'DELETE',
+                                                            });
+                                                        
+                                                            if (!response.ok) throw new Error('Failed to delete question');
+                                                        
+                                                            toast({
+                                                              title: 'Question Deleted',
+                                                              description: 'Successfully deleted the question.',
+                                                            });
+                                                        
+                                                            // Refresh questions for this content
+                                                            await fetchQuestionsForContent(contentItem.id);
+                                                          } catch (error) {
+                                                            toast({
+                                                              title: 'Error',
+                                                              description: 'Failed to delete question',
+                                                              variant: 'destructive',
+                                                            });
+                                                          }
+                                                        }}                                                        className="h-5 w-5 p-0 text-red-600 hover:text-red-700"
                                                         title="Delete Question"
                                                       >
                                                         <Trash2 className="h-3 w-3" />
@@ -1898,7 +1998,7 @@ export default function TopicManagement() {
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                      <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-1">
                                         <div 
                                           className="flex items-center justify-center w-5 h-5 text-xs font-medium border border-gray-300 rounded bg-white text-gray-700"
                                           title={`Topic order: ${topic.visible === false ? 'Hidden' : getTopicDisplayNumber(topic, unit)}`}
@@ -1910,35 +2010,32 @@ export default function TopicManagement() {
                                       </div>
                                       <div>
                                         <div className="flex items-center gap-2">
-                                          <h3 className="font-semibold text-base">{topic.topic}</h3>
-                                          {topic.showstudent ? (
-                                            <Eye className="h-4 w-4 text-green-600" />
-                                          ) : (
-                                            <EyeOff className="h-4 w-4 text-gray-400" />
-                                          )}
+                                          <div className="flex items-center gap-2">
+                                            <h3 className="font-semibold text-base">{topic.topic}</h3>
+                                            <Badge variant="outline" className="text-xs">
+                                              {topicContent.length} items
+                                            </Badge>
+                                          </div>
                                         </div>
                                         {topic.short_summary && (
                                           <p className="text-sm text-gray-600 mt-1">{topic.short_summary}</p>
                                         )}
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="outline">
-                                        {topicContent.length} content items
-                                      </Badge>
-                                      <div className="flex items-center gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleMoveTopicUp(topic.id, unit);
-                                          }}
-                                          className="h-8 w-8 p-0"
-                                          title="Move Topic Up"
-                                        >
-                                          <ArrowUp className="h-4 w-4" />
-                                        </Button>
+                                    <div className="flex items-center gap-1">
+                                  <div className="grid grid-cols-4 gap-0.5">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMoveTopicUp(topic.id, unit);
+                                      }}
+                                      className="h-4 w-4 p-0"
+                                      title="Move Topic Up"
+                                    >
+                                      <ArrowUp className="h-3 w-3" />
+                                    </Button>
                                         <Button
                                           variant="ghost"
                                           size="sm"
@@ -1946,10 +2043,10 @@ export default function TopicManagement() {
                                             e.stopPropagation();
                                             handleMoveTopicDown(topic.id, unit);
                                           }}
-                                          className="h-8 w-8 p-0"
+                                          className="h-4 w-4 p-0"
                                           title="Move Topic Down"
                                         >
-                                          <ArrowDown className="h-4 w-4" />
+                                          <ArrowDown className="h-3 w-3" />
                                         </Button>
                                         <Button
                                           variant="ghost"
@@ -1958,13 +2055,13 @@ export default function TopicManagement() {
                                             e.stopPropagation();
                                             handleToggleTopicVisibility(topic.id);
                                           }}
-                                          className="h-8 w-8 p-0"
+                                          className="h-4 w-4 p-0"
                                           title={(topic.visible !== false) ? "Hide Topic" : "Show Topic"}
                                         >
                                           {(topic.visible !== false) ? (
-                                            <Eye className="h-4 w-4 text-green-600" />
+                                            <Eye className="h-3 w-3 text-green-600" />
                                           ) : (
-                                            <EyeOff className="h-4 w-4 text-gray-400" />
+                                            <EyeOff className="h-3 w-3 text-gray-400" />
                                           )}
                                         </Button>
                                         <Button
@@ -1974,10 +2071,10 @@ export default function TopicManagement() {
                                             e.stopPropagation();
                                             handleAddContentToTopic(topic.id);
                                           }}
-                                          className="h-8 w-8 p-0"
+                                          className="h-4 w-4 p-0"
                                           title="Add Content"
                                         >
-                                          <Plus className="h-4 w-4" />
+                                          <Plus className="h-3 w-3" />
                                         </Button>
                                         <Button
                                           variant="ghost"
@@ -1986,10 +2083,10 @@ export default function TopicManagement() {
                                             e.stopPropagation();
                                             handleAIGenerateContent(topic.id, topic.topic, topic.short_summary);
                                           }}
-                                          className="h-8 w-8 p-0 text-purple-600"
+                                          className="h-4 w-4 p-0 text-purple-600"
                                           title="AI Generate Content"
                                         >
-                                          <Sparkles className="h-4 w-4" />
+                                          <Sparkles className="h-3 w-3" />
                                         </Button>
                                         <Button
                                           variant="ghost"
@@ -1998,10 +2095,10 @@ export default function TopicManagement() {
                                             e.stopPropagation();
                                             handleEditTopic(topic);
                                           }}
-                                          className="h-8 w-8 p-0"
+                                          className="h-4 w-4 p-0"
                                           title="Edit Topic"
                                         >
-                                          <Pencil className="h-4 w-4" />
+                                          <Pencil className="h-3 w-3" />
                                         </Button>
                                         <Button
                                           variant="ghost"
@@ -2010,10 +2107,10 @@ export default function TopicManagement() {
                                             e.stopPropagation();
                                             handleDeleteTopic(topic.id);
                                           }}
-                                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                          className="h-4 w-4 p-0 text-red-600 hover:text-red-700"
                                           title="Delete Topic"
                                         >
-                                          <Trash2 className="h-4 w-4" />
+                                          <Trash2 className="h-3 w-3" />
                                         </Button>
                                       </div>
                                     </div>
@@ -2048,61 +2145,121 @@ export default function TopicManagement() {
                                     <ChevronRight className="h-4 w-4 text-gray-600" />
                                   </div>
                                   <div>
-                                    <div className="flex items-center gap-2">
-                                      <h3 className="font-semibold text-base">{topic.topic}</h3>
-                                      {topic.showstudent ? (
-                                        <Eye className="h-4 w-4 text-green-600" />
-                                      ) : (
-                                        <EyeOff className="h-4 w-4 text-gray-400" />
-                                      )}
-                                    </div>
+                                        <div className="flex items-center gap-2">
+                                          <h3 className="font-semibold text-base">{topic.topic}</h3>
+                                        </div>
                                     {topic.short_summary && (
                                       <p className="text-sm text-gray-600 mt-1">{topic.short_summary}</p>
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline">
-                                    {topicContent.length} content items
-                                  </Badge>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
+                                    <div className="flex items-center gap-1">
+                                    <div className="grid grid-rows-2 grid-cols-4 gap-1">
+                                      {/* Row 1 */}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleMoveTopicUp(topic.id, unit);
+                                        }}
+                                        className="h-8 w-8 p-0"
+                                        title="Move Topic Up"
+                                      >
+                                        <ArrowUp className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleMoveTopicDown(topic.id, unit);
+                                        }}
+                                        className="h-8 w-8 p-0"
+                                        title="Move Topic Down"
+                                      >
+                                        <ArrowDown className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleToggleTopicVisibility(topic.id);
+                                        }}
+                                        className="h-8 w-8 p-0"
+                                        title={(topic.visible !== false) ? "Hide Topic" : "Show Topic"}
+                                      >
+                                        {(topic.visible !== false) ? (
+                                          <Eye className="h-4 w-4 text-green-600" />
+                                        ) : (
+                                          <EyeOff className="h-4 w-4 text-gray-400" />
+                                        )}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleAddContentToTopic(topic.id);
+                                        }}
+                                        className="h-8 w-8 p-0"
+                                        title="Add Content"
+                                      >
+                                        <Plus className="h-4 w-4" />
+                                      </Button>
+
+                                      {/* Row 2 */}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleAIGenerateContent(topic.id, topic.topic, topic.short_summary);
+                                        }}
+                                        className="h-8 w-8 p-0 text-purple-600"
+                                        title="AI Generate Content"
+                                      >
+                                        <Sparkles className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditTopic(topic);
+                                        }}
+                                        className="h-8 w-8 p-0"
+                                        title="Edit Topic"
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteTopic(topic.id);
+                                        }}
+                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                        title="Delete Topic"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleAddContentToTopic(topic.id);
+                                        // Don't try to view topic as content
+                                        return;
                                       }}
-                                      className="h-8 w-8 p-0"
-                                      title="Add Content"
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditTopic(topic);
-                                      }}
-                                      className="h-8 w-8 p-0"
-                                      title="Edit Topic"
-                                    >
-                                      <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteTopic(topic.id);
-                                      }}
-                                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                      title="Delete Topic"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
+                                        className="h-8 w-8 p-0"
+                                        title="View Topic"
+                                      >
+                                        <FileText className="h-4 w-4 text-blue-600" />
+                                      </Button>
+                                    </div>
                                 </div>
                               </div>
                             </CardHeader>
@@ -2165,6 +2322,25 @@ export default function TopicManagement() {
           setIsYouTubeSearchOpen(false);
         }}
       />
+
+      {/* Question Dialog */}
+      {selectedQuestion && (
+        <AdminQuestionDialog
+          isOpen={!!selectedQuestion}
+          onClose={() => setSelectedQuestion(null)}
+          question={selectedQuestion}
+        />
+      )}
+
+      {/* Content View Modal */}
+      {selectedContentForView && (
+        <ContentViewModal
+          isOpen={!!selectedContentForView}
+          onClose={() => setSelectedContentForView(null)}
+          contentId={selectedContentForView.id}
+          showNavigation={false}
+        />
+      )}
     </div>
   );
 }

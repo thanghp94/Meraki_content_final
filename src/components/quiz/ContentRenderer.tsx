@@ -24,10 +24,16 @@ export default function ContentRenderer({
 }: ContentRendererProps) {
   // Parse content data (handles both old string format and new JSON format)
   const contentData = typeof content === 'string' ? parseContentData(content) : content;
+console.log('ContentRenderer Debug:');
+console.log('- Original content:', content);
+console.log('- Parsed contentData:', contentData);
+console.log('- contentData type:', typeof contentData);
+console.log('- contentData.type:', contentData?.type);
+console.log('- contentData.text:', contentData?.text);
 
   // Extract text for TTS
   const getTextForTTS = () => {
-    switch (contentData.type) {
+    switch (contentData?.type || 'text') {
       case 'text':
         return contentData.text || '';
       case 'image':
@@ -40,7 +46,13 @@ export default function ContentRenderer({
   };
 
   const renderContent = () => {
-    switch (contentData.type) {
+    // Safety check for contentData
+    if (!contentData) {
+      return null;
+    }
+    
+    switch (contentData?.type || 'text') {
+      
       case 'text':
         return contentData.text ? (
           <div className={`${showTTS ? 'flex items-start gap-2' : ''}`}>

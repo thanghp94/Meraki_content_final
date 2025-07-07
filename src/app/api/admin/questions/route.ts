@@ -25,8 +25,8 @@ export async function GET() {
         q.answer,
         q.tg_tao,
         c."Title" as content_title
-      FROM question q
-      LEFT JOIN content c ON q.contentid = c.id::text
+      FROM meraki.question q
+      LEFT JOIN meraki.content c ON q.contentid = c.id::text
       ORDER BY q.tg_tao DESC NULLS LAST
     `);
 
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const id = uuidv4();
 
     await db.execute(sql`
-      INSERT INTO question (
+      INSERT INTO meraki.question (
         id,
         chuong_trinh,
         questionlevel,
@@ -82,21 +82,21 @@ export async function POST(request: NextRequest) {
       )
       VALUES (
         ${id},
-        ${chuong_trinh},
-        ${questionlevel},
+        ${chuong_trinh || ''},
+        ${questionlevel || ''},
         ${contentid},
-        ${question_type},
-        ${noi_dung},
-        ${video},
-        ${picture},
-        ${cau_tra_loi_1},
-        ${cau_tra_loi_2},
-        ${cau_tra_loi_3},
-        ${cau_tra_loi_4},
-        ${correct_choice},
-        ${time},
-        ${explanation},
-        ${answer},
+        ${question_type || 'multiple_choice'},
+        ${noi_dung || ''},
+        ${video || ''},
+        ${picture || ''},
+        ${cau_tra_loi_1 || ''},
+        ${cau_tra_loi_2 || ''},
+        ${cau_tra_loi_3 || ''},
+        ${cau_tra_loi_4 || ''},
+        ${correct_choice || ''},
+        ${time || '30'},
+        ${explanation || ''},
+        ${answer || ''},
         NOW()
       )
     `);

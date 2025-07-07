@@ -1,6 +1,9 @@
-import { pgTable, text, integer, timestamp, boolean, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, boolean, uuid, pgSchema } from 'drizzle-orm/pg-core';
 
-// Games table
+// Define the meraki schema
+export const merakiSchema = pgSchema('meraki');
+
+// Games table (in public schema)
 export const games = pgTable('games', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
@@ -13,7 +16,7 @@ export const games = pgTable('games', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// Folders table
+// Folders table (in public schema)
 export const folders = pgTable('folders', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
@@ -25,7 +28,7 @@ export const folders = pgTable('folders', {
 });
 
 // Content table in meraki schema
-export const content = pgTable('content', {
+export const content = merakiSchema.table('content', {
   id: uuid('id').primaryKey(),
   title: text('Title'),
   infor1: text('infor1'),
@@ -39,23 +42,23 @@ export const content = pgTable('content', {
 });
 
 // Topic table in meraki schema
-export const topics = pgTable('topic', {
+export const topics = merakiSchema.table('topic', {
   id: text('id').primaryKey(),
   topic: text('topic'),
   shortSummary: text('short_summary'),
   unit: text('unit'),
   image: text('image'),
-  parentId: text('parentid'),
-  showStudent: boolean('showstudent'),
+  parentid: text('parentid'),
+  showstudent: boolean('showstudent'),
   program: text('program'),
 });
 
 // Questions table in meraki schema
-export const questions = pgTable('question', {
+export const questions = merakiSchema.table('question', {
   id: text('id').primaryKey(),
   chuongTrinh: text('chuong_trinh'),
-  questionLevel: text('questionlevel'),
-  contentId: text('contentid'),
+  questionlevel: text('questionlevel'),
+  contentid: text('contentid'),
   questionType: text('question_type'),
   noiDung: text('noi_dung'),
   video: text('video'),
@@ -71,11 +74,11 @@ export const questions = pgTable('question', {
   answer: text('answer'),
 });
 
-// Game-Question Links table (many-to-many relationship)
+// Game-Question Links table (many-to-many relationship) - in public schema
 export const gameQuestionLinks = pgTable('game_question_links', {
   id: uuid('id').defaultRandom().primaryKey(),
   gameId: uuid('game_id').references(() => games.id, { onDelete: 'cascade' }).notNull(),
-  questionId: uuid('question_id').references(() => questions.id, { onDelete: 'cascade' }).notNull(),
+  questionId: text('question_id').references(() => questions.id, { onDelete: 'cascade' }).notNull(),
   orderInGame: integer('order_in_game').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

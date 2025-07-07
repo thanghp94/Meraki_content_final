@@ -12,8 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import type { GameSetupConfig, Topic } from '@/types/quiz';
 import type { PowerUpId } from '@/types/powerups';
 import { POWER_UPS } from '@/types/powerups';
-import { Users, LayoutGrid, BookOpen, Loader2, Zap, Shuffle } from 'lucide-react';
+import { Users, LayoutGrid, BookOpen, Loader2, Zap, Shuffle, FolderOpen, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { gameSaveService, type SavedGameConfig } from '@/lib/gameSaveService';
 
 const CUTE_TEAM_NAMES = [
   "Rainbow Stars", "Happy Pandas", "Clever Foxes", "Mighty Dragons",
@@ -42,9 +43,13 @@ export default function SetupForm() {
   const [selectedContentIds, setSelectedContentIds] = useState<string[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<string>('');
   const [contentQuestions, setContentQuestions] = useState<any[]>([]);
+  const [savedGames, setSavedGames] = useState<SavedGameConfig[]>([]);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Load saved games
+    setSavedGames(gameSaveService.getSavedGames());
     
     // Handle URL parameters from library content selection
     const contentIds = searchParams.get('contentIds');
@@ -132,6 +137,38 @@ export default function SetupForm() {
     const newTeamNames = [...teamNames];
     newTeamNames[index] = name;
     setTeamNames(newTeamNames);
+  };
+
+  const handleLoadGame = (gameId: string) => {
+    const game = gameSaveService.loadGame(gameId);
+    if (game) {
+      // Load the game configuration into the form
+      setNumberOfTeams(game.config.teamNames.length);
+      setTeamNames(game.config.teamNames);
+      setGridSize(game.config.gridSize);
+      
+      // Try to find matching topic
+      const matchingTopic = availableTopics.find(topic => 
+        game.config.selectedTopics.includes(topic.name)
+      );
+      if (matchingTopic) {
+        setTopicId(matchingTopic.id);
+      }
+
+      toast({
+        title: 'Game Loaded!',
+        description: `"${game.name}" configuration has been loaded.`,
+      });
+    }
+  };
+
+  const handleDeleteGame = (gameId: string) => {
+    gameSaveService.deleteGame(gameId);
+    setSavedGames(gameSaveService.getSavedGames());
+    toast({
+      title: 'Game Deleted',
+      description: 'Saved game has been removed.',
+    });
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -262,6 +299,50 @@ export default function SetupForm() {
                 </div>
               )}
             </section>
+
+            {/* Saved Games Section */}
+            {savedGames.length > 0 && (
+              <section className="space-y-3">
+                <Label className="text-xl font-bold flex items-center justify-center text-orange-600">
+                  <FolderOpen className="mr-2 h-6 w-6 text-orange-500" />
+                  📁 Saved Games
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {savedGames.map(game => (
+                    <div key={game.id} className="border rounded-lg p-3 bg-card">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm truncate">{game.name}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {game.config.teamNames.length} teams • {game.config.questionCount} questions
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(game.timestamp).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteGame(game.id)}
+                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={() => handleLoadGame(game.id)}
+                        size="sm"
+                        className="w-full text-xs"
+                      >
+                        Load Configuration
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Game Settings - Full Width */}
             <section className="space-y-4 bg-muted/20 rounded-lg p-4">

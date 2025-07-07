@@ -2,8 +2,8 @@ import { PowerUpId, PowerUpInstance, PowerUpEffect, POWER_UPS } from '@/types/po
 import type { Team } from '@/types/quiz';
 import { v4 as uuidv4 } from 'uuid';
 
-// Helper function to get random points within a range
-export function getRandomPoints(min: number, max: number): number {
+// Helper function to get random points within a range for powerups
+export function getRandomPointsInRange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
@@ -50,7 +50,7 @@ export function activatePowerUp(
     case 'magnet': {
       const target = selectRandomTarget(teams, activatingTeamId);
       if (target) {
-        const points = getRandomPoints(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
+        const points = getRandomPointsInRange(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
         effects.push({
           type: 'points',
           sourceTeamId: activatingTeamId,
@@ -102,7 +102,7 @@ export function activatePowerUp(
     
     case 'gift':
     case 'ghost': {
-      const points = getRandomPoints(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
+      const points = getRandomPointsInRange(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
       effects.push({
         type: 'points',
         sourceTeamId: activatingTeamId,
@@ -115,7 +115,7 @@ export function activatePowerUp(
       const target = selectRandomTarget(teams, activatingTeamId);
       const activatingTeam = teams.find(t => t.id === activatingTeamId);
       if (target && activatingTeam) {
-        const points = getRandomPoints(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
+        const points = getRandomPointsInRange(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
         const actualPoints = Math.min(points, activatingTeam.score);
         effects.push({
           type: 'points',
@@ -150,7 +150,7 @@ export function activatePowerUp(
       const target = selectRandomTarget(teams, activatingTeamId);
       const activatingTeam = teams.find(t => t.id === activatingTeamId);
       if (target && activatingTeam) {
-        const points = getRandomPoints(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
+        const points = getRandomPointsInRange(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
         const actualPoints = Math.min(points, activatingTeam.score);
         effects.push({
           type: 'points',
@@ -194,7 +194,7 @@ export function activatePowerUp(
     case 'shark': {
       const target = selectRandomTarget(teams, activatingTeamId);
       if (target) {
-        const points = getRandomPoints(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
+        const points = getRandomPointsInRange(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
         const actualPoints = Math.min(points, target.score);
         effects.push({
           type: 'points',
@@ -221,7 +221,7 @@ export function activatePowerUp(
     case 'baam': {
       const activatingTeam = teams.find(t => t.id === activatingTeamId);
       if (activatingTeam) {
-        const points = getRandomPoints(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
+        const points = getRandomPointsInRange(powerUp.effect.minPoints!, powerUp.effect.maxPoints!);
         const actualPoints = Math.min(points, activatingTeam.score);
         effects.push({
           type: 'points',

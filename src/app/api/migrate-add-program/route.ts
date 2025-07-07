@@ -4,11 +4,11 @@ import { sql } from 'drizzle-orm';
 
 export async function POST() {
   try {
-    console.log('Adding program column to meraki.topic table...');
+    console.log('Adding program column to topic table...');
     
     // Add the program column
     await db.execute(sql`
-      ALTER TABLE meraki.topic 
+      ALTER TABLE topic 
       ADD COLUMN IF NOT EXISTS program TEXT
     `);
     
@@ -18,13 +18,13 @@ export async function POST() {
     console.log('Setting default program values for existing topics...');
     
     await db.execute(sql`
-      UPDATE meraki.topic 
+      UPDATE topic 
       SET program = 'Grapeseed' 
       WHERE program IS NULL AND unit LIKE 'Unit %'
     `);
     
     await db.execute(sql`
-      UPDATE meraki.topic 
+      UPDATE topic 
       SET program = 'TATH' 
       WHERE program IS NULL AND unit LIKE 'Bài %'
     `);

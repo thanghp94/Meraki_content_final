@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Play, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -98,6 +98,9 @@ export function MediaGallery({ images, videos, className = '' }: MediaGalleryPro
       {/* Media Viewer Modal */}
       <Dialog open={!!selectedMedia} onOpenChange={closeMedia}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogTitle className="sr-only">
+            {selectedMedia?.type === 'image' ? 'Image Viewer' : 'Video Viewer'}
+          </DialogTitle>
           <div className="relative">
             {/* Close Button */}
             <Button

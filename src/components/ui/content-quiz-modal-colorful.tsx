@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Check } from 'lucide-react';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
@@ -284,6 +284,7 @@ export default function ContentQuizModal({
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl">
+          <DialogTitle className="sr-only">No Quiz Available</DialogTitle>
           <div className="p-6 text-center">
             <h2 className="text-xl font-bold mb-2">No Quiz Available</h2>
             <p className="text-gray-600 mb-4">There are no questions available for this content yet.</p>
@@ -298,6 +299,7 @@ export default function ContentQuizModal({
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl">
+          <DialogTitle className="sr-only">Quiz Error</DialogTitle>
           <div className="p-6 text-center">
             <h2 className="text-xl font-bold mb-2">Quiz Error</h2>
             <p className="text-gray-600">Unable to load question {currentQuestionIndex + 1}. Please try again.</p>
@@ -314,6 +316,7 @@ export default function ContentQuizModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl w-full h-[100vh] md:h-[90vh] p-0 bg-gray-50 overflow-hidden">
+        <DialogTitle className="sr-only">Content Quiz</DialogTitle>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 md:p-6 bg-white border-b flex-shrink-0">

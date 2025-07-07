@@ -1,24 +1,67 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useGame } from '@/contexts/GameContext';
 import GameGrid from '@/components/quiz/GameGrid';
 import QuestionModal from '@/components/quiz/QuestionModal';
 import PowerUpModal from '@/components/quiz/PowerUpModal';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Award, Info, Play } from 'lucide-react';
+import { Award, Info, Play, Save } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import HorizontalTeamDisplay from '@/components/quiz/HorizontalTeamDisplay';
 import { cn } from '@/lib/utils';
+import { gameSaveService } from '@/lib/gameSaveService';
+import { useToast } from '@/hooks/use-toast';
 
 export default function GamePage() {
   const router = useRouter();
   const params = useParams();
   const { gameState, endGame, activePowerUp, closePowerUpModal } = useGame();
   const sessionId = params.sessionId as string;
+  const { toast } = useToast();
+  const [saveGameName, setSaveGameName] = useState('');
+  const [showSaveInput, setShowSaveInput] = useState(false);
+
+  const handleSaveGame = () => {
+    if (!gameState) return;
+    
+    if (!saveGameName.trim()) {
+      toast({
+        title: 'Name Required',
+        description: 'Please enter a name for your game configuration.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      gameSaveService.saveGame(saveGameName.trim(), {
+        selectedTopics: [gameState.topic.name], // Assuming single topic for now
+        teamNames: gameState.teams.map(team => team.name),
+        gridSize: Math.sqrt(gameState.tiles.length), // Calculate grid size from tiles
+        questionCount: gameState.tiles.length,
+        gameMode: 'standard', // Default game mode
+      });
+
+      toast({
+        title: 'Game Saved!',
+        description: `"${saveGameName}" has been saved successfully.`,
+      });
+
+      setShowSaveInput(false);
+      setSaveGameName('');
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Failed to save the game configuration.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     if (!gameState || gameState.sessionId !== sessionId) {
@@ -73,7 +116,42 @@ export default function GamePage() {
             ))}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4 pt-6">
-             <Button onClick={() => router.push('/setup')} className="w-full">
+            {/* Save Game Section */}
+            {!showSaveInput ? (
+              <Button 
+                onClick={() => setShowSaveInput(true)} 
+                variant="secondary" 
+                className="w-full"
+              >
+                <Save className="mr-2 h-4 w-4" /> Save Game Setup
+              </Button>
+            ) : (
+              <div className="w-full space-y-2">
+                <Input
+                  placeholder="Enter game name..."
+                  value={saveGameName}
+                  onChange={(e) => setSaveGameName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSaveGame()}
+                />
+                <div className="flex space-x-2">
+                  <Button onClick={handleSaveGame} className="flex-1">
+                    Save
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setShowSaveInput(false);
+                      setSaveGameName('');
+                    }} 
+                    variant="outline" 
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            <Button onClick={() => router.push('/setup')} className="w-full">
               Play Again
             </Button>
             <Button onClick={() => router.push('/')} variant="outline" className="w-full">

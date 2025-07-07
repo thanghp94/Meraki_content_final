@@ -9,7 +9,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { topic, short_summary, unit, image, showstudent, visible, order_index, program } = body;
+    const { topic, short_summary, unit, image, parentid, showstudent, program } = body;
 
     await db.execute(sql`
       UPDATE meraki.topic
@@ -18,9 +18,8 @@ export async function PUT(
         short_summary = ${short_summary},
         unit = ${unit},
         image = ${image},
+        parentid = ${parentid},
         showstudent = ${showstudent},
-        visible = ${visible !== undefined ? visible : true},
-        order_index = ${order_index},
         program = ${program}
       WHERE id = ${id}
     `);

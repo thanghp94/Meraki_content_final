@@ -76,21 +76,21 @@ export default function QuestionTile({ tile, onClick }: QuestionTileProps) {
         isRevealed && "opacity-90 cursor-not-allowed transform-none"
       )}
       style={{
-        background: isRevealed ? getRevealedGradient() : getGradientStyle(displayNumber),
+        backgroundImage: isRevealed ? getRevealedGradient() : getGradientStyle(displayNumber),
         backgroundSize: '200% 200%',
         animation: !isRevealed ? 'gradient 8s ease infinite' : 'none'
-      }}
+      }}      
       onClick={isRevealed ? undefined : onClick}
       onMouseEnter={(e) => {
         if (!isRevealed) {
-          e.currentTarget.style.background = getHoverGradientStyle(displayNumber);
+          e.currentTarget.style.backgroundImage = getHoverGradientStyle(displayNumber);
         }
       }}
       onMouseLeave={(e) => {
         if (!isRevealed) {
-          e.currentTarget.style.background = getGradientStyle(displayNumber);
+          e.currentTarget.style.backgroundImage = getGradientStyle(displayNumber);
         }
-      }}
+      }}      
       aria-label={isRevealed ? 
         tile.type === 'powerup' ? 
           `Power-up ${displayNumber} (revealed)` :
