@@ -1,39 +1,40 @@
-# Use official Node.js 18 Alpine image as base
-FROM node:18-alpine
-
-# Add curl for health checks and basic tools
-RUN apk add --no-cache curl bash
-
-# Create non-root user for security
-RUN addgroup -g 1001 nodejs && adduser -S nextuser -u 1001 -G nodejs
+# Use a specific Node.js version suitable for Next.js
+# Using 'alpine' images for smaller size
+FROM node:20-alpine AS development
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files first (better caching)
+# Copy package.json and package-lock.json first to cache dependencies
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci --only=production --no-audit --no-fund
+# Using --force or --legacy-peer-deps might be needed for some dependency conflicts
+RUN npm install --frozen-lockfile # Use --frozen-lockfile for production builds
 
-# Copy application source with proper ownership
-COPY --chown=nextuser:nodejs . .
+# Copy all application files
+# The crucial step to ensure all source code, including jsconfig.json/tsconfig.json, is present
+COPY . .
 
-# Build the Next.js app
+# Build the Next.js application
+# This step produces the optimized production build
 RUN npm run build
 
-# Ensure proper ownership of all files
-RUN chown -R nextuser:nodejs /app
+# --- Start a new stage for the production-ready image (smaller) ---
+FROM node:20-alpine AS production
 
-# Switch to non-root user
-USER nextuser
+# Set working directory
+WORKDIR /app
 
-# Expose port 3000
+# Copy only necessary files from the build stage
+# This ensures your final image is small and only contains what's needed for runtime
+COPY --from=development /app/.next ./.next
+COPY --from=development /app/node_modules ./node_modules
+COPY --from=development /app/public ./public
+COPY package.json ./
+
+# Expose the port Next.js listens on (default is 3000)
 EXPOSE 3000
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
-
-# Start the Next.js app
-CMD ["npm", "run", "start"]
+# Define the command to start the Next.js production server
+CMD ["npm", "start"]
