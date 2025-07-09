@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Library } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SetupForm from '@/components/quiz/SetupForm';
+import { Suspense } from 'react'; // This import is correct!
 
 export default function SetupPage() {
   return (
@@ -26,10 +27,13 @@ export default function SetupPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Main Content */}
       <div className="container mx-auto max-w-7xl px-4 py-4">
-        <SetupForm />
+        {/* YOU MUST WRAP SetupForm HERE */}
+        <Suspense fallback={<div>Loading setup form...</div>}> {/* Add a fallback UI */}
+          <SetupForm />
+        </Suspense>
       </div>
     </div>
   );
