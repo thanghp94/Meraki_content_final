@@ -7,6 +7,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - DATABASE_URL="postgresql://neondb_owner:npg_hSAJ4sXfkq5e@ep-cool-hill-ad2wdxdq.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require" # <--- ADD THIS LINE
+
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
