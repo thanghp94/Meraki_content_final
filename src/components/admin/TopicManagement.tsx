@@ -59,6 +59,33 @@ const getDisplayNumber = (item: { visible?: boolean }, allItems: any[], unit?: s
   return visibleIndex + 1;
 };
 
+// Action button component for better reusability
+const ActionButton = ({ 
+  onClick, 
+  icon: Icon, 
+  title, 
+  variant = "ghost", 
+  size = "sm", 
+  className = "h-4 w-4 p-0" 
+}: {
+  onClick: (e: React.MouseEvent) => void;
+  icon: any;
+  title: string;
+  variant?: "ghost" | "outline" | "default";
+  size?: "sm" | "default";
+  className?: string;
+}) => (
+  <Button
+    variant={variant}
+    size={size}
+    onClick={onClick}
+    className={className}
+    title={title}
+  >
+    <Icon className="h-3 w-3" />
+  </Button>
+);
+
 interface Topic {
   id: string;
   topic: string;
