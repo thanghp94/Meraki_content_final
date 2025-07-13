@@ -45,6 +45,20 @@ const CONSTANTS = {
   },
 } as const;
 
+// Utility functions
+const getDisplayNumber = (item: { visible?: boolean }, allItems: any[], unit?: string) => {
+  const unitItems = unit ? allItems.filter(i => i.unit === unit) : allItems;
+  const visibleItems = unitItems.filter(item => item.visible !== false);
+  
+  if (item.visible === false) {
+    return CONSTANTS.DISPLAY_LABELS.HIDDEN;
+  }
+  
+  const sortedVisibleItems = visibleItems.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  const visibleIndex = sortedVisibleItems.findIndex(i => i.id === (item as any).id);
+  return visibleIndex + 1;
+};
+
 interface Topic {
   id: string;
   topic: string;
@@ -321,14 +335,7 @@ export default function TopicManagement() {
   // Get display number for content item
   const getContentDisplayNumber = (contentItem: Content, topicId: string) => {
     const displayOrder = getContentDisplayOrder(topicId);
-    const visibleContent = displayOrder.filter(item => item.visible !== false);
-    
-    if (contentItem.visible === false) {
-      return CONSTANTS.DISPLAY_LABELS.HIDDEN;
-    }
-    
-    const visibleIndex = visibleContent.findIndex(item => item.id === contentItem.id);
-    return visibleIndex + 1;
+    return getDisplayNumber(contentItem, displayOrder);
   };
 
   // Group topics by unit with program filtering
@@ -1021,16 +1028,7 @@ export default function TopicManagement() {
 
   // Get display number for topic item
   const getTopicDisplayNumber = (topicItem: Topic, unit: string) => {
-    const unitTopics = topics.filter(t => t.unit === unit);
-    const visibleTopics = unitTopics.filter(item => item.visible !== false);
-    
-    if (topicItem.visible === false) {
-      return CONSTANTS.DISPLAY_LABELS.HIDDEN;
-    }
-    
-    const sortedVisibleTopics = visibleTopics.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-    const visibleIndex = sortedVisibleTopics.findIndex(item => item.id === topicItem.id);
-    return visibleIndex + 1;
+    return getDisplayNumber(topicItem, topics, unit);
   };
 
   if (isLoading) {
