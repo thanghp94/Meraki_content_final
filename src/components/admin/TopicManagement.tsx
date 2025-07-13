@@ -27,6 +27,24 @@ import AdminQuestionDialog from './AdminQuestionDialog';
 import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import { ContentData, EnhancedFormData, parseContentData, stringifyContentData } from '@/types/question';
 
+// Constants for better maintainability
+const CONSTANTS = {
+  GRAPESEED_UNITS_COUNT: 40,
+  GRID_COLUMNS: 4,
+  ANIMATION_DURATION: 200,
+  MAX_HEIGHT: {
+    EXPANDED_TOPIC: '2000px',
+    EXPANDED_CONTENT: '1000px',
+    COLLAPSED: '0',
+  },
+  DISPLAY_LABELS: {
+    HIDDEN: 'H',
+    MULTIPLE_CHOICE: 'Multiple Choice',
+    TEXT: 'Text',
+    NOT_AVAILABLE: 'N/A',
+  },
+} as const;
+
 interface Topic {
   id: string;
   topic: string;
@@ -306,7 +324,7 @@ export default function TopicManagement() {
     const visibleContent = displayOrder.filter(item => item.visible !== false);
     
     if (contentItem.visible === false) {
-      return 'H'; // Hidden
+      return CONSTANTS.DISPLAY_LABELS.HIDDEN;
     }
     
     const visibleIndex = visibleContent.findIndex(item => item.id === contentItem.id);
@@ -1007,7 +1025,7 @@ export default function TopicManagement() {
     const visibleTopics = unitTopics.filter(item => item.visible !== false);
     
     if (topicItem.visible === false) {
-      return 'H'; // Hidden
+      return CONSTANTS.DISPLAY_LABELS.HIDDEN;
     }
     
     const sortedVisibleTopics = visibleTopics.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
@@ -1104,7 +1122,7 @@ export default function TopicManagement() {
                         <SelectValue placeholder="Select unit" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: 40 }, (_, i) => (
+                        {Array.from({ length: CONSTANTS.GRAPESEED_UNITS_COUNT }, (_, i) => (
                           <SelectItem key={i + 1} value={`Unit ${i + 1}`}>
                             Unit {i + 1}
                           </SelectItem>
@@ -1883,9 +1901,9 @@ export default function TopicManagement() {
                                                             }
                                                           })()}
                                                         </p>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                          {question.cau_tra_loi_1 ? 'Multiple Choice' : 'Text'} • Answer: {question.correct_choice || 'N/A'}
-                                                        </p>
+                                                                  <p className="text-xs text-gray-500 mt-1">
+                                                                    {question.cau_tra_loi_1 ? CONSTANTS.DISPLAY_LABELS.MULTIPLE_CHOICE : CONSTANTS.DISPLAY_LABELS.TEXT} • Answer: {question.correct_choice || CONSTANTS.DISPLAY_LABELS.NOT_AVAILABLE}
+                                                                  </p>
                                                       </div>
                                                     </div>
                                                     <div className="flex items-center gap-1">
