@@ -9,7 +9,7 @@ interface ImageResult {
 
 // GIPHY Search
 async function searchGiphy(query: string): Promise<ImageResult[]> {
-  const apiKey = process.env.NEXT_PUBLIC_GIPHY_API_KEY;
+  const apiKey = process.env.GIPHY_API_KEY;
   if (!apiKey) {
     throw new Error('GIPHY API key not configured');
   }
@@ -29,8 +29,8 @@ async function searchGiphy(query: string): Promise<ImageResult[]> {
 
 // Google Custom Search
 async function searchGoogleImages(query: string): Promise<ImageResult[]> {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-  const searchEngineId = process.env.NEXT_PUBLIC_GOOGLE_SEARCH_ENGINE_ID;
+  const apiKey = process.env.GOOGLE_API_KEY;
+  const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
   
   if (!apiKey || !searchEngineId) {
     throw new Error('Google Search API not configured');

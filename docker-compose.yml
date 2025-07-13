@@ -7,7 +7,12 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL="postgresql://neondb_owner:npg_hSAJ4sXfkq5e@ep-cool-hill-ad2wdxdq.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require" # <--- ADD THIS LINE
+      - DATABASE_URL=postgresql://neondb_owner:npg_hSAJ4sXfkq5e@ep-cool-hill-ad2wdxdq.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+      # Image Search API Keys
+      - GIPHY_API_KEY=yq5efxxqcigeEf2b6MPxtrCQqc3JdKYn
+      - GOOGLE_API_KEY=AIzaSyB91UTzojia0KkqoqHmaWeW8Jn6r00gjeg
+      - GOOGLE_SEARCH_ENGINE_ID=035b08dadfe4f47f1
+      - GOOGLE_AI_API_KEY=AIzaSyAPDUk42Ib1aPQREvW6O3RQUIry5mAFlCY
 
     restart: unless-stopped
     healthcheck:
