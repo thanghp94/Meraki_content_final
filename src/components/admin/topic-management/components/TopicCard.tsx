@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardHeader } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, GripVertical, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { TopicActionsMenu } from './actions/TopicActionsMenu';
 import { ContentCard } from './ContentCard';
 import { Topic, Content } from '../types';
@@ -53,37 +53,34 @@ export const TopicCard: React.FC<TopicCardProps> = ({
   onDeleteContent,
 }) => {
   const isExpanded = expandedTopics.has(topic.id);
-  const topicContent = content.filter(c => c.topic_id === topic.id);
+  const topicContent = content
+    .filter(c => c.topicid === topic.id || c.topic_id === topic.id)
+    .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
 
   return (
     <Collapsible
       open={isExpanded}
       onOpenChange={() => onToggleExpanded(topic.id)}
     >
-      <Card className={`mb-4 ${topic.visible === false ? 'opacity-50' : ''}`}>
+      <Card className={`${topic.visible === false ? 'opacity-50' : ''} hover:shadow-sm transition-shadow`}>
         <CollapsibleTrigger className="w-full">
-          <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 flex-1">
-                <GripVertical className="h-4 w-4 text-gray-400" />
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-500" />
-                )}
-                <BookOpen className="h-4 w-4 text-blue-600" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-lg truncate">{topic.topic}</h3>
-                    <Badge variant="secondary" className="text-xs">
-                      {topicContent.length} content
-                    </Badge>
-                  </div>
-                  {topic.short_summary && (
-                    <p className="text-sm text-gray-600 mt-1 truncate">{topic.short_summary}...</p>
-                  )}
+          <div className="flex items-center justify-between p-2 hover:bg-gray-50 transition-colors rounded">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {isExpanded ? (
+                <ChevronDown className="h-3 w-3 text-gray-500 shrink-0" />
+              ) : (
+                <ChevronRight className="h-3 w-3 text-gray-500 shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-sm truncate">{topic.topic}</h3>
+                  <Badge variant="secondary" className="text-xs shrink-0 h-4 px-1">
+                    {topicContent.length}
+                  </Badge>
                 </div>
               </div>
+            </div>
+            <div className="flex items-center gap-1">
               <TopicActionsMenu
                 topic={topic}
                 unit={unit}
@@ -96,10 +93,10 @@ export const TopicCard: React.FC<TopicCardProps> = ({
                 onDelete={() => onDeleteTopic(topic.id)}
               />
             </div>
-          </CardHeader>
+          </div>
         </CollapsibleTrigger>
-        <CollapsibleContent className="px-6 pb-4">
-          <div className="space-y-2">
+        <CollapsibleContent className="px-2 pb-1">
+          <div className="space-y-1 mt-1">
             {topicContent.map((contentItem) => (
               <ContentCard
                 key={contentItem.id}

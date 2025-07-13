@@ -1,8 +1,6 @@
 import React from 'react';
-import { Card, CardHeader } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, GripVertical, FileText } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { FileText } from 'lucide-react';
 import { ContentActionsMenu } from './actions/ContentActionsMenu';
 import { Content } from '../types';
 
@@ -32,33 +30,30 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   onDelete,
 }) => {
   return (
-    <Card className={`ml-8 ${content.visible === false ? 'opacity-50' : ''}`}>
-      <CardHeader className="py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-1">
-            <GripVertical className="h-3 w-3 text-gray-400" />
-            <FileText className="h-3 w-3 text-green-600" />
-            <div>
-              <h4 className="font-medium text-sm truncate">{content.title}...</h4>
-              {content.infor1 && (
-                <p className="text-xs text-gray-500 truncate">{content.infor1}...</p>
-              )}
-            </div>
+    <Card className={`ml-4 ${content.visible === false ? 'opacity-50' : ''} hover:shadow-sm transition-shadow`}>
+      <div className="flex items-center justify-between p-2 hover:bg-gray-50 transition-colors rounded">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <FileText className="h-3 w-3 text-green-600 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h4 className="font-medium text-xs truncate">{content.title}</h4>
+            {content.infor1 && (
+              <p className="text-xs text-gray-500 truncate">{content.infor1}</p>
+            )}
           </div>
-          <ContentActionsMenu
-            contentItem={content}
-            topicId={topicId}
-            onMoveUp={onMoveUp}
-            onMoveDown={onMoveDown}
-            onToggleVisibility={onToggleVisibility}
-            onView={onView}
-            onAddQuestion={onAddQuestion}
-            onAIGenerate={onAIGenerate}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
         </div>
-      </CardHeader>
+        <ContentActionsMenu
+          contentItem={content}
+          topicId={topicId}
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
+          onToggleVisibility={onToggleVisibility}
+          onView={onView}
+          onAddQuestion={onAddQuestion}
+          onAIGenerate={onAIGenerate}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      </div>
     </Card>
   );
 };
