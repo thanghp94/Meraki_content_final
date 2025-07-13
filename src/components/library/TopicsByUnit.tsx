@@ -220,21 +220,21 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
       <div className="w-48 border-r border-gray-200 bg-gray-50">
         <div className="p-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Units</h3>
-          <div className="space-y-1">
+          <div className={programFilter === 'Grapeseed' ? 'grid grid-cols-2 gap-1' : 'space-y-1'}>
             {unitGroups.map((unitGroup) => {
               const isSelected = expandedUnits.has(unitGroup.unit);
               
               return (
                 <div
                   key={unitGroup.unit}
-                  className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-colors ${
+                  className={`flex items-center justify-between py-2 rounded-md cursor-pointer transition-colors ${
                     isSelected 
                       ? 'bg-blue-100 text-blue-700 border border-blue-200' 
                       : 'hover:bg-gray-100 text-gray-700'
-                  }`}
+                  } ${programFilter === 'Grapeseed' ? 'px-1' : 'px-3'}`}
                   onClick={() => toggleUnit(unitGroup.unit)}
                 >
-                  <span className="text-sm font-medium truncate">
+                  <span className={`font-medium truncate ${programFilter === 'Grapeseed' ? 'text-xs' : 'text-sm'}`}>
                     {unitGroup.unit}
                   </span>
                   <div className="flex items-center gap-1">
@@ -242,7 +242,9 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                        className={`p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 ${
+                          programFilter === 'Grapeseed' ? 'h-5 w-5' : 'h-6 w-6'
+                        }`}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedUnitForGame(unitGroup);
@@ -251,7 +253,7 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
                           setIsUnitSelectionOpen(true);
                         }}
                       >
-                        <Play className="h-3 w-3" />
+                        <Play className={programFilter === 'Grapeseed' ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
                       </Button>
                     )}
                   </div>
@@ -280,118 +282,115 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
               <div key={`${unitGroup.unit}-content`} className="w-full">
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-blue-700">{unitGroup.unit}</h2>
-                  <p className="text-gray-600 mt-1">Topics and content for this unit</p>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {unitGroup.topics.map((topic) => {
+                <div className="space-y-4">
+                  {/* Compact Lesson Buttons - Fixed Layout */}
+                  <div className="flex flex-wrap gap-2">
+                    {unitGroup.topics.map((topic, index) => {
                       const topicContent = getContentForTopic(topic);
                       const questionCounts = topicContent.map(content => Number(content.question_count) || 0).filter(count => count > 0);
                       const totalQuestions = questionCounts.reduce((sum, count) => sum + count, 0);
+                      const isExpanded = expandedTopics.has(topic.id);
+                      const lessonNumber = index + 1;
                       
                       return (
-                        <Card 
-                          key={topic.id}
-                          className="hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => toggleTopic(topic.id)}
-                        >
-                          <CardContent className="p-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-2 flex-grow min-w-0">
-                                <h4 className="font-medium text-sm truncate">
-                                  {topic.topic || 'Untitled Topic'}
-                                </h4>
-                                {expandedTopics.has(topic.id) ? (
-                                  <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                )}
+                        <div key={topic.id} className="relative">
+                          {/* Compact Lesson Button */}
+                          <button
+                            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all cursor-pointer text-xs font-semibold relative ${
+                              isExpanded 
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-lg' 
+                                : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400 hover:bg-purple-50'
+                            }`}
+                            onClick={() => toggleTopic(topic.id)}
+                            title={topic.topic || 'Untitled Topic'}
+                          >
+                            L{lessonNumber}
+                            
+                            {/* Small Play Button Inside */}
+                            {totalQuestions > 0 && (
+                              <div
+                                className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const topicContent = getContentForTopic(topic);
+                                  if (topicContent.length > 0) {
+                                    setSelectedTopicForGame(topic);
+                                    setSelectedContentIds(new Set());
+                                    setIsContentSelectionOpen(true);
+                                  } else {
+                                    router.push(`/setup?topicId=${topic.id}`);
+                                  }
+                                }}
+                                title="Start Game"
+                              >
+                                <Play className="h-2.5 w-2.5 text-white" />
                               </div>
-                              {totalQuestions > 0 && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 flex-shrink-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const topicContent = getContentForTopic(topic);
-                                    if (topicContent.length > 0) {
-                                      setSelectedTopicForGame(topic);
-                                      setSelectedContentIds(new Set());
-                                      setIsContentSelectionOpen(true);
-                                    } else {
-                                      // If no content, go directly to setup with just the topic
-                                      router.push(`/setup?topicId=${topic.id}`);
-                                    }
-                                  }}
-                                >
-                                  <Play className="h-3 w-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
+                            )}
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
 
-                  {/* Content cards integrated within the same unit container */}
-                  {unitGroup.topics.some(topic => expandedTopics.has(topic.id)) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                      {unitGroup.topics
-                        .filter(topic => expandedTopics.has(topic.id))
-                        .flatMap(topic => {
-                          const topicContent = getContentForTopic(topic);
-                          return topicContent.map((content, index) => ({
-                            ...content,
-                            displayOrder: index + 1
-                          }));
-                        })
-                        .map((content) => (
-                          <Card 
-                            key={content.id} 
-                            className="hover:shadow-sm transition-shadow w-full bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 border-l-4 border-l-orange-400 cursor-pointer"
-                            onClick={() => handleViewContent(content.id)}
-                          >
-                            <CardContent className="p-3">
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-2 flex-grow min-w-0">
-                                  <div 
-                                    className="flex items-center justify-center w-5 h-5 text-xs font-medium border border-orange-300 rounded bg-orange-100 text-orange-700 flex-shrink-0"
-                                    title={`Content order: ${content.displayOrder}`}
-                                  >
-                                    {content.displayOrder}
+                  {/* Content Display Area - Separate Section Below */}
+                  {Array.from(expandedTopics).map(topicId => {
+                    const topic = unitGroup.topics.find(t => t.id === topicId);
+                    if (!topic) return null;
+                    
+                    const topicContent = getContentForTopic(topic);
+                    const lessonNumber = unitGroup.topics.findIndex(t => t.id === topicId) + 1;
+                    
+                    return (
+                      <div key={`content-${topicId}`} className="border rounded-lg p-4 bg-gray-50">
+                        <h4 className="font-semibold text-lg mb-3 text-purple-700">
+                          {topic.topic && topic.topic.toLowerCase().includes('lesson') 
+                            ? topic.topic 
+                            : `Lesson ${lessonNumber}: ${topic.topic}`
+                          }
+                        </h4>
+                        
+                        {topicContent.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                            {topicContent.map((content, index) => (
+                              <Card 
+                                key={content.id} 
+                                className="hover:shadow-sm transition-shadow bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 border-l-4 border-l-orange-400 cursor-pointer"
+                                onClick={() => handleViewContent(content.id)}
+                              >
+                                <CardContent className="p-3">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 flex-grow min-w-0">
+                                      <div className="flex items-center justify-center w-6 h-6 text-xs font-medium border border-orange-300 rounded bg-orange-100 text-orange-700 flex-shrink-0">
+                                        {index + 1}
+                                      </div>
+                                      <h5 className="font-medium text-sm truncate text-orange-900">{content.title}</h5>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-100 flex-shrink-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/setup?contentId=${content.id}`);
+                                      }}
+                                    >
+                                      <Play className="h-3 w-3" />
+                                    </Button>
                                   </div>
-                                  <h5 className="font-medium text-sm truncate text-orange-900">{content.title}</h5>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-100 flex-shrink-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    router.push(`/setup?contentId=${content.id}`);
-                                  }}
-                                >
-                                  <Play className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
-                  )}
-
-                  {/* Show empty state if expanded topic has no content */}
-                  {unitGroup.topics.some(topic => expandedTopics.has(topic.id)) && 
-                   unitGroup.topics
-                     .filter(topic => expandedTopics.has(topic.id))
-                     .every(topic => getContentForTopic(topic).length === 0) && (
-                    <div className="text-center py-8 text-sm text-muted-foreground bg-muted/50 rounded-lg w-full">
-                      No content available for this topic
-                    </div>
-                  )}
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 text-sm text-muted-foreground bg-white rounded-lg border">
+                            No content available for this lesson
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -445,7 +444,13 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
               variant="outline"
               onClick={() => {
                 if (selectedTopicForGame) {
-                  router.push(`/setup?topicId=${selectedTopicForGame.id}`);
+                  const topicContent = getContentForTopic(selectedTopicForGame);
+                  const allContentIds = topicContent.map(content => content.id).join(',');
+                  if (allContentIds) {
+                    router.push(`/setup?contentIds=${allContentIds}&topicId=${selectedTopicForGame.id}`);
+                  } else {
+                    router.push(`/setup?topicId=${selectedTopicForGame.id}`);
+                  }
                   setIsContentSelectionOpen(false);
                 }
               }}
@@ -618,8 +623,19 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
               variant="outline"
               onClick={() => {
                 if (selectedUnitForGame) {
-                  const allTopicIds = selectedUnitForGame.topics.map(t => t.id).join(',');
-                  router.push(`/setup?topicIds=${allTopicIds}&unit=${encodeURIComponent(selectedUnitForGame.unit)}`);
+                  // Collect all content IDs from all topics in the unit
+                  const allContentIds = selectedUnitForGame.topics
+                    .flatMap(topic => getContentForTopic(topic))
+                    .map(content => content.id)
+                    .join(',');
+                  
+                  if (allContentIds) {
+                    router.push(`/setup?contentIds=${allContentIds}&unit=${encodeURIComponent(selectedUnitForGame.unit)}`);
+                  } else {
+                    // Fallback to topic IDs if no content found
+                    const allTopicIds = selectedUnitForGame.topics.map(t => t.id).join(',');
+                    router.push(`/setup?topicIds=${allTopicIds}&unit=${encodeURIComponent(selectedUnitForGame.unit)}`);
+                  }
                   setIsUnitSelectionOpen(false);
                 }
               }}
