@@ -6,15 +6,25 @@ export interface Topic {
   program?: string;
   visible?: boolean;
   order?: number;
+  image?: string;
+  showstudent?: boolean;
+  order_index?: number;
 }
 
 export interface Content {
   id: string;
   title: string;
   infor1?: string;
+  infor2?: string;
+  image1?: string;
+  image2?: string;
+  video1?: string;
+  video2?: string;
   visible?: boolean;
   topic_id?: string;
+  topicid?: string;
   order?: number;
+  order_index?: number;
 }
 
 export interface Question {

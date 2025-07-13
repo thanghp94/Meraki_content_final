@@ -15,11 +15,12 @@ import {
 } from './topic-management';
 
 // Import existing modals (these would need to be extracted too, but keeping them for now)
-// import { QuizGeneratorModal } from './QuizGeneratorModal';
-// import { ContentGeneratorModal } from './ContentGeneratorModal';
-// import { ImageSearchModal } from './ImageSearchModal';
-// import { YouTubeSearchModal } from './YouTubeSearchModal';
-// import AdminQuestionDialog from './AdminQuestionDialog';
+import { QuizGeneratorModal } from './QuizGeneratorModal';
+import { ContentGeneratorModal } from './ContentGeneratorModal';
+import { ImageSearchModal } from './ImageSearchModal';
+import { YouTubeSearchModal } from './YouTubeSearchModal';
+import AdminQuestionDialog from './AdminQuestionDialog';
+import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 
 export default function TopicManagement() {
   // Use the extracted hook for all state and operations
@@ -58,20 +59,81 @@ export default function TopicManagement() {
   const [selectedContentForView, setSelectedContentForView] = useState<Content | null>(null);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
+  
+  // Additional state for modal interactions
+  const [selectedTopicForContent, setSelectedTopicForContent] = useState<string>('');
+  const [selectedContentForQuestion, setSelectedContentForQuestion] = useState<string>('');
+  const [selectedContentForAI, setSelectedContentForAI] = useState<{ id: string; title: string } | null>(null);
+  const [selectedTopicForAI, setSelectedTopicForAI] = useState<{ id: string; name: string; summary: string } | null>(null);
+  const [isTopicDialogOpen, setIsTopicDialogOpen] = useState(false);
+  const [isContentDialogOpen, setIsContentDialogOpen] = useState(false);
+  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
+  const [isQuizGeneratorOpen, setIsQuizGeneratorOpen] = useState(false);
+  const [isContentGeneratorOpen, setIsContentGeneratorOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
+
+  // Form data states
+  const [topicFormData, setTopicFormData] = useState({
+    topic: '',
+    short_summary: '',
+    unit: '',
+    image: '',
+    showstudent: true,
+    program: ''
+  });
+
+  const [contentFormData, setContentFormData] = useState({
+    title: '',
+    infor1: '',
+    infor2: '',
+    image1: '',
+    image2: '',
+    video1: '',
+    video2: '',
+    topicid: ''
+  });
+
+  const [questionFormData, setQuestionFormData] = useState({
+    chuong_trinh: '',
+    questionlevel: '',
+    contentid: '',
+    question_type: 'multiple_choice',
+    questionContent: { type: 'text', text: '' },
+    choice1Content: { type: 'text', text: '' },
+    choice2Content: { type: 'text', text: '' },
+    choice3Content: { type: 'text', text: '' },
+    choice4Content: { type: 'text', text: '' },
+    correct_choice: '',
+    time: '',
+    explanation: '',
+    answer: '',
+    video: '',
+    picture: ''
+  });
 
   // Handler functions for actions that need modal interactions
   const handleAddContentToTopic = (topicId: string) => {
-    // Implementation for adding content
-    console.log('Add content to topic:', topicId);
+    setSelectedTopicForContent(topicId);
+    setContentFormData(prev => ({ ...prev, topicid: topicId }));
+    setIsContentDialogOpen(true);
   };
 
   const handleAIGenerateContent = (topicId: string, topicName: string, summary?: string) => {
-    // Implementation for AI content generation
-    console.log('AI generate content for topic:', topicId, topicName, summary);
+    setSelectedTopicForAI({ id: topicId, name: topicName, summary: summary || '' });
+    setIsContentGeneratorOpen(true);
   };
 
   const handleEditTopic = (topic: Topic) => {
     setEditingTopic(topic);
+    setTopicFormData({
+      topic: topic.topic,
+      short_summary: topic.short_summary || '',
+      unit: topic.unit || '',
+      image: topic.image || '',
+      showstudent: topic.showstudent || true,
+      program: topic.program || ''
+    });
+    setIsTopicDialogOpen(true);
   };
 
   const handleViewContent = (content: Content) => {
@@ -79,17 +141,29 @@ export default function TopicManagement() {
   };
 
   const handleAddQuestion = (contentId: string) => {
-    // Implementation for adding questions
-    console.log('Add question to content:', contentId);
+    setSelectedContentForQuestion(contentId);
+    setQuestionFormData(prev => ({ ...prev, contentid: contentId }));
+    setIsQuestionDialogOpen(true);
   };
 
   const handleAIGenerate = (contentId: string, contentTitle: string) => {
-    // Implementation for AI question generation
-    console.log('AI generate questions for content:', contentId, contentTitle);
+    setSelectedContentForAI({ id: contentId, title: contentTitle });
+    setIsQuizGeneratorOpen(true);
   };
 
   const handleEditContent = (content: Content) => {
     setEditingContent(content);
+    setContentFormData({
+      title: content.title,
+      infor1: content.infor1 || '',
+      infor2: content.infor2 || '',
+      image1: content.image1 || '',
+      image2: content.image2 || '',
+      video1: content.video1 || '',
+      video2: content.video2 || '',
+      topicid: content.topicid || content.topic_id || ''
+    });
+    setIsContentDialogOpen(true);
   };
 
   // Get filtered topics using the hook
@@ -206,21 +280,30 @@ export default function TopicManagement() {
         ))}
       </div>
 
-      {/* Modals - TODO: Extract these to separate modal components */}
-      {/* 
-      {showQuizGenerator && (
+      {/* Modals */}
+      {selectedContentForAI && (
         <QuizGeneratorModal
-          isOpen={showQuizGenerator}
-          onClose={() => setShowQuizGenerator(false)}
-          onGenerated={fetchTopics}
+          isOpen={isQuizGeneratorOpen}
+          onClose={() => {
+            setIsQuizGeneratorOpen(false);
+            setSelectedContentForAI(null);
+          }}
+          contentId={selectedContentForAI.id}
+          contentTitle={selectedContentForAI.title}
         />
       )}
 
-      {showContentGenerator && (
+      {selectedTopicForAI && (
         <ContentGeneratorModal
-          isOpen={showContentGenerator}
-          onClose={() => setShowContentGenerator(false)}
-          onGenerated={fetchContent}
+          isOpen={isContentGeneratorOpen}
+          onClose={() => {
+            setIsContentGeneratorOpen(false);
+            setSelectedTopicForAI(null);
+          }}
+          topicId={selectedTopicForAI.id}
+          topicName={selectedTopicForAI.name}
+          topicSummary={selectedTopicForAI.summary}
+          onContentGenerated={fetchContent}
         />
       )}
 
@@ -228,6 +311,10 @@ export default function TopicManagement() {
         <ImageSearchModal
           isOpen={showImageSearch}
           onClose={() => setShowImageSearch(false)}
+          onSelect={(url) => {
+            // Handle image selection - this would need proper implementation
+            setShowImageSearch(false);
+          }}
         />
       )}
 
@@ -235,16 +322,29 @@ export default function TopicManagement() {
         <YouTubeSearchModal
           isOpen={showYouTubeSearch}
           onClose={() => setShowYouTubeSearch(false)}
+          onSelect={(url) => {
+            // Handle video selection - this would need proper implementation
+            setShowYouTubeSearch(false);
+          }}
         />
       )}
 
-      {showQuestionDialog && (
+      {selectedQuestion && (
         <AdminQuestionDialog
-          isOpen={showQuestionDialog}
-          onClose={() => setShowQuestionDialog(false)}
+          isOpen={!!selectedQuestion}
+          onClose={() => setSelectedQuestion(null)}
+          question={selectedQuestion}
         />
       )}
-      */}
+
+      {selectedContentForView && (
+        <ContentViewModal
+          isOpen={!!selectedContentForView}
+          onClose={() => setSelectedContentForView(null)}
+          contentId={selectedContentForView.id}
+          showNavigation={false}
+        />
+      )}
     </div>
   );
 }
