@@ -86,6 +86,62 @@ const ActionButton = ({
   </Button>
 );
 
+// Unit selector component for Grapeseed program
+const UnitSelector = ({ 
+  topics, 
+  selectedProgram, 
+  selectedUnit, 
+  setSelectedUnit 
+}: {
+  topics: Topic[];
+  selectedProgram: string;
+  selectedUnit: string | null;
+  setSelectedUnit: (unit: string | null) => void;
+}) => {
+  if (selectedProgram !== 'Grapeseed') return null;
+
+  const availableUnits = Array.from(new Set(
+    topics
+      .filter(topic => topic.program === 'Grapeseed')
+      .map(topic => topic.unit)
+      .filter(unit => unit && unit.startsWith('Unit '))
+  )).sort((a, b) => {
+    const numA = parseInt(a.replace('Unit ', ''));
+    const numB = parseInt(b.replace('Unit ', ''));
+    return numA - numB;
+  });
+
+  return (
+    <div className="mb-6">
+      <div className="flex flex-wrap gap-2">
+        {availableUnits.map((unit) => {
+          const unitNumber = unit.replace('Unit ', '');
+          const topicsInUnit = topics.filter(t => t.unit === unit && t.program === 'Grapeseed');
+          
+          return (
+            <Button
+              key={unit}
+              variant={selectedUnit === unit ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedUnit(unit)}
+              className={`
+                w-8 h-8 rounded-full text-xs font-medium transition-all
+                ${selectedUnit === unit 
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600' 
+                  : 'border-gray-300 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
+                }
+              `}
+              title={`${unit} (${topicsInUnit.length} topics)`}
+            >
+              {unitNumber}
+            </Button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 interface Topic {
   id: string;
   topic: string;
@@ -139,7 +195,8 @@ export default function TopicManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
   const [expandedContent, setExpandedContent] = useState<Set<string>>(new Set());
-  const [selectedProgram, setSelectedProgram] = useState<string>('all');
+  const [selectedProgram, setSelectedProgram] = useState<string>('Grapeseed');
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   
   // Dialog states
   const [isTopicDialogOpen, setIsTopicDialogOpen] = useState(false);
@@ -365,12 +422,17 @@ export default function TopicManagement() {
     return getDisplayNumber(contentItem, displayOrder);
   };
 
-  // Group topics by unit with program filtering
+  // Group topics by unit with program filtering and unit selection
   const getTopicsByUnit = () => {
     // Filter topics by selected program
-    const filteredTopics = selectedProgram === 'all' 
+    let filteredTopics = selectedProgram === 'all' 
       ? topics 
       : topics.filter(topic => topic.program === selectedProgram);
+
+    // Further filter by selected unit for Grapeseed program
+    if (selectedProgram === 'Grapeseed' && selectedUnit) {
+      filteredTopics = filteredTopics.filter(topic => topic.unit === selectedUnit);
+    }
 
     const grouped = filteredTopics.reduce((acc, topic) => {
       const unit = topic.unit || 'Uncategorized';
@@ -385,6 +447,14 @@ export default function TopicManagement() {
     });
 
     return grouped;
+  };
+
+  // Reset unit selection when program changes
+  const handleProgramChange = (program: string) => {
+    setSelectedProgram(program);
+    if (program !== 'Grapeseed') {
+      setSelectedUnit(null);
+    }
   };
 
   // Handle topic operations
@@ -1072,11 +1142,11 @@ export default function TopicManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-6">
           <h1 className="text-3xl font-bold">Topic Management</h1>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-2">
             <Label className="text-sm font-medium">Filter by Program:</Label>
-            <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+            <Select value={selectedProgram} onValueChange={handleProgramChange}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
@@ -1204,6 +1274,14 @@ export default function TopicManagement() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Unit Selector for Grapeseed Program */}
+      <UnitSelector 
+        topics={topics}
+        selectedProgram={selectedProgram}
+        selectedUnit={selectedUnit}
+        setSelectedUnit={setSelectedUnit}
+      />
 
       {/* Content Creation Dialog */}
       <Dialog open={isContentDialogOpen} onOpenChange={(open) => {
