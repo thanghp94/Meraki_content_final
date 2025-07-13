@@ -15,8 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Loader2, Plus, Pencil, Trash2, FileText, HelpCircle, 
   ChevronDown, ChevronRight, Eye, EyeOff, GripVertical,
-  ArrowUp, ArrowDown, Sparkles, BookOpen, Search, Play
+  ArrowUp, ArrowDown, Sparkles, BookOpen, Search, Play, MoreHorizontal
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { QuizGeneratorModal } from './QuizGeneratorModal';
 import { ContentGeneratorModal } from './ContentGeneratorModal';
@@ -84,6 +85,168 @@ const ActionButton = ({
   >
     <Icon className="h-3 w-3" />
   </Button>
+);
+
+// Topic Actions Dropdown Menu Component
+const TopicActionsMenu = ({ 
+  topic, 
+  unit, 
+  onMoveUp, 
+  onMoveDown, 
+  onToggleVisibility, 
+  onAddContent, 
+  onAIGenerate, 
+  onEdit, 
+  onDelete 
+}: {
+  topic: Topic;
+  unit: string;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onToggleVisibility: () => void;
+  onAddContent: () => void;
+  onAIGenerate: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onMoveUp(); }}>
+        <ArrowUp className="h-4 w-4 mr-2" />
+        Move Up
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onMoveDown(); }}>
+        <ArrowDown className="h-4 w-4 mr-2" />
+        Move Down
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }}>
+        {topic.visible !== false ? (
+          <>
+            <EyeOff className="h-4 w-4 mr-2" />
+            Hide Topic
+          </>
+        ) : (
+          <>
+            <Eye className="h-4 w-4 mr-2" />
+            Show Topic
+          </>
+        )}
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddContent(); }}>
+        <Plus className="h-4 w-4 mr-2" />
+        Add Content
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAIGenerate(); }}>
+        <Sparkles className="h-4 w-4 mr-2 text-purple-600" />
+        AI Generate Content
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+        <Pencil className="h-4 w-4 mr-2" />
+        Edit Topic
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-600">
+        <Trash2 className="h-4 w-4 mr-2" />
+        Delete Topic
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
+
+// Content Actions Dropdown Menu Component
+const ContentActionsMenu = ({ 
+  contentItem, 
+  topicId, 
+  onMoveUp, 
+  onMoveDown, 
+  onToggleVisibility, 
+  onView, 
+  onAddQuestion, 
+  onAIGenerate, 
+  onEdit, 
+  onDelete 
+}: {
+  contentItem: Content;
+  topicId: string;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onToggleVisibility: () => void;
+  onView: () => void;
+  onAddQuestion: () => void;
+  onAIGenerate: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 w-6 p-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MoreHorizontal className="h-3 w-3" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onMoveUp(); }}>
+        <ArrowUp className="h-4 w-4 mr-2" />
+        Move Up
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onMoveDown(); }}>
+        <ArrowDown className="h-4 w-4 mr-2" />
+        Move Down
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }}>
+        {contentItem.visible !== false ? (
+          <>
+            <EyeOff className="h-4 w-4 mr-2" />
+            Hide Content
+          </>
+        ) : (
+          <>
+            <Eye className="h-4 w-4 mr-2" />
+            Show Content
+          </>
+        )}
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(); }}>
+        <FileText className="h-4 w-4 mr-2 text-blue-600" />
+        View Content
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddQuestion(); }}>
+        <Plus className="h-4 w-4 mr-2" />
+        Add Question
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAIGenerate(); }}>
+        <Sparkles className="h-4 w-4 mr-2 text-purple-600" />
+        AI Generate Questions
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+        <Pencil className="h-4 w-4 mr-2" />
+        Edit Content
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-600">
+        <Trash2 className="h-4 w-4 mr-2" />
+        Delete Content
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
 );
 
 // Unit selector component for Grapeseed program
@@ -1688,98 +1851,17 @@ export default function TopicManagement() {
                                       )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="grid grid-cols-4 gap-0.5">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleMoveTopicUp(topic.id, unit);
-                                      }}
-                                      className="h-4 w-4 p-0"
-                                      title="Move Topic Up"
-                                    >
-                                      <ArrowUp className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleMoveTopicDown(topic.id, unit);
-                                      }}
-                                      className="h-8 w-8 p-0"
-                                      title="Move Topic Down"
-                                    >
-                                      <ArrowDown className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleToggleTopicVisibility(topic.id);
-                                      }}
-                                      className="h-8 w-8 p-0"
-                                      title={(topic.visible !== false) ? "Hide Topic" : "Show Topic"}
-                                    >
-                                      {(topic.visible !== false) ? (
-                                        <Eye className="h-4 w-4 text-green-600" />
-                                      ) : (
-                                        <EyeOff className="h-4 w-4 text-gray-400" />
-                                      )}
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAddContentToTopic(topic.id);
-                                      }}
-                                      className="h-8 w-8 p-0"
-                                      title="Add Content"
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAIGenerateContent(topic.id, topic.topic, topic.short_summary);
-                                      }}
-                                      className="h-8 w-8 p-0 text-purple-600"
-                                      title="AI Generate Content"
-                                    >
-                                      <Sparkles className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditTopic(topic);
-                                      }}
-                                      className="h-8 w-8 p-0"
-                                      title="Edit Topic"
-                                    >
-                                      <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteTopic(topic.id);
-                                      }}
-                                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                      title="Delete Topic"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
+                                <TopicActionsMenu
+                                  topic={topic}
+                                  unit={unit}
+                                  onMoveUp={() => handleMoveTopicUp(topic.id, unit)}
+                                  onMoveDown={() => handleMoveTopicDown(topic.id, unit)}
+                                  onToggleVisibility={() => handleToggleTopicVisibility(topic.id)}
+                                  onAddContent={() => handleAddContentToTopic(topic.id)}
+                                  onAIGenerate={() => handleAIGenerateContent(topic.id, topic.topic, topic.short_summary)}
+                                  onEdit={() => handleEditTopic(topic)}
+                                  onDelete={() => handleDeleteTopic(topic.id)}
+                                />
                               </div>
                           </CardHeader>
                         </CollapsibleTrigger>
@@ -1841,109 +1923,18 @@ export default function TopicManagement() {
                                                 <h4 className="font-medium text-sm truncate">{contentItem.title}...</h4>
                                                 <p className="text-xs text-gray-500 truncate">{contentItem.infor1}...</p>                                                </div>
                                               </div>
-                                                <div className="grid grid-cols-4 gap-0.5">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleMoveContentUp(contentItem.id, topic.id);
-                                                  }}
-                                                  className="h-4 w-4 p-0"
-                                                  title="Move Up"
-                                                >
-                                                  <ArrowUp className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleMoveContentDown(contentItem.id, topic.id);
-                                                  }}
-                                                  className="h-4 w-4 p-0"
-                                                  title="Move Down"
-                                                >
-                                                  <ArrowDown className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    // Toggle visibility
-                                                    handleToggleContentVisibility(contentItem.id);
-                                                  }}
-                                                  className="h-4 w-4 p-0"
-                                                  title={(contentItem.visible !== false) ? "Hide Content" : "Show Content"}
-                                                >
-                                                  {(contentItem.visible !== false) ? (
-                                                    <Eye className="h-3 w-3 text-green-600" />
-                                                  ) : (
-                                                    <EyeOff className="h-3 w-3 text-gray-400" />
-                                                  )}
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedContentForView(contentItem);
-                                                  }}
-                                                  className="h-4 w-4 p-0"
-                                                  title="View Content"
-                                                >
-                                                  <FileText className="h-3 w-3 text-blue-600" />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAddQuestion(contentItem.id);
-                                                  }}
-                                                  className="h-4 w-4 p-0"
-                                                  title="Add Question"
-                                                >
-                                                  <Plus className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAIGenerate(contentItem.id, contentItem.title);
-                                                  }}
-                                                  className="h-4 w-4 p-0 text-purple-600"
-                                                  title="AI Generate Questions"
-                                                >
-                                                  <Sparkles className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleEditContent(contentItem);
-                                                  }}
-                                                  className="h-6 w-6 p-0"
-                                                  title="Edit Content"
-                                                >
-                                                  <Pencil className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteContent(contentItem.id);
-                                                  }}
-                                                  className="h-4 w-4 p-0 text-red-600 hover:text-red-700"
-                                                  title="Delete Content"
-                                                >
-                                                  <Trash2 className="h-3 w-3" />
-                                                </Button>
-                                              </div>
+                                                <ContentActionsMenu
+                                                  contentItem={contentItem}
+                                                  topicId={topic.id}
+                                                  onMoveUp={() => handleMoveContentUp(contentItem.id, topic.id)}
+                                                  onMoveDown={() => handleMoveContentDown(contentItem.id, topic.id)}
+                                                  onToggleVisibility={() => handleToggleContentVisibility(contentItem.id)}
+                                                  onView={() => setSelectedContentForView(contentItem)}
+                                                  onAddQuestion={() => handleAddQuestion(contentItem.id)}
+                                                  onAIGenerate={() => handleAIGenerate(contentItem.id, contentItem.title)}
+                                                  onEdit={() => handleEditContent(contentItem)}
+                                                  onDelete={() => handleDeleteContent(contentItem.id)}
+                                                />
                                             </div>
                                           </CardHeader>
                                         </CollapsibleTrigger>
@@ -2143,98 +2134,17 @@ export default function TopicManagement() {
                                         )}
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                  <div className="grid grid-cols-4 gap-0.5">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleMoveTopicUp(topic.id, unit);
-                                      }}
-                                      className="h-4 w-4 p-0"
-                                      title="Move Topic Up"
-                                    >
-                                      <ArrowUp className="h-3 w-3" />
-                                    </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleMoveTopicDown(topic.id, unit);
-                                          }}
-                                          className="h-4 w-4 p-0"
-                                          title="Move Topic Down"
-                                        >
-                                          <ArrowDown className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleToggleTopicVisibility(topic.id);
-                                          }}
-                                          className="h-4 w-4 p-0"
-                                          title={(topic.visible !== false) ? "Hide Topic" : "Show Topic"}
-                                        >
-                                          {(topic.visible !== false) ? (
-                                            <Eye className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <EyeOff className="h-3 w-3 text-gray-400" />
-                                          )}
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleAddContentToTopic(topic.id);
-                                          }}
-                                          className="h-4 w-4 p-0"
-                                          title="Add Content"
-                                        >
-                                          <Plus className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleAIGenerateContent(topic.id, topic.topic, topic.short_summary);
-                                          }}
-                                          className="h-4 w-4 p-0 text-purple-600"
-                                          title="AI Generate Content"
-                                        >
-                                          <Sparkles className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEditTopic(topic);
-                                          }}
-                                          className="h-4 w-4 p-0"
-                                          title="Edit Topic"
-                                        >
-                                          <Pencil className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteTopic(topic.id);
-                                          }}
-                                          className="h-4 w-4 p-0 text-red-600 hover:text-red-700"
-                                          title="Delete Topic"
-                                        >
-                                          <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                    </div>
+                                    <TopicActionsMenu
+                                      topic={topic}
+                                      unit={unit}
+                                      onMoveUp={() => handleMoveTopicUp(topic.id, unit)}
+                                      onMoveDown={() => handleMoveTopicDown(topic.id, unit)}
+                                      onToggleVisibility={() => handleToggleTopicVisibility(topic.id)}
+                                      onAddContent={() => handleAddContentToTopic(topic.id)}
+                                      onAIGenerate={() => handleAIGenerateContent(topic.id, topic.topic, topic.short_summary)}
+                                      onEdit={() => handleEditTopic(topic)}
+                                      onDelete={() => handleDeleteTopic(topic.id)}
+                                    />
                                   </div>
                                 </CardHeader>
                               </CollapsibleTrigger>
@@ -2274,114 +2184,17 @@ export default function TopicManagement() {
                                     )}
                                   </div>
                                 </div>
-                                    <div className="flex items-center gap-1">
-                                    <div className="grid grid-rows-2 grid-cols-4 gap-1">
-                                      {/* Row 1 */}
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleMoveTopicUp(topic.id, unit);
-                                        }}
-                                        className="h-8 w-8 p-0"
-                                        title="Move Topic Up"
-                                      >
-                                        <ArrowUp className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleMoveTopicDown(topic.id, unit);
-                                        }}
-                                        className="h-8 w-8 p-0"
-                                        title="Move Topic Down"
-                                      >
-                                        <ArrowDown className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleToggleTopicVisibility(topic.id);
-                                        }}
-                                        className="h-8 w-8 p-0"
-                                        title={(topic.visible !== false) ? "Hide Topic" : "Show Topic"}
-                                      >
-                                        {(topic.visible !== false) ? (
-                                          <Eye className="h-4 w-4 text-green-600" />
-                                        ) : (
-                                          <EyeOff className="h-4 w-4 text-gray-400" />
-                                        )}
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleAddContentToTopic(topic.id);
-                                        }}
-                                        className="h-8 w-8 p-0"
-                                        title="Add Content"
-                                      >
-                                        <Plus className="h-4 w-4" />
-                                      </Button>
-
-                                      {/* Row 2 */}
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleAIGenerateContent(topic.id, topic.topic, topic.short_summary);
-                                        }}
-                                        className="h-8 w-8 p-0 text-purple-600"
-                                        title="AI Generate Content"
-                                      >
-                                        <Sparkles className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleEditTopic(topic);
-                                        }}
-                                        className="h-8 w-8 p-0"
-                                        title="Edit Topic"
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleDeleteTopic(topic.id);
-                                        }}
-                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                        title="Delete Topic"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Don't try to view topic as content
-                                        return;
-                                      }}
-                                        className="h-8 w-8 p-0"
-                                        title="View Topic"
-                                      >
-                                        <FileText className="h-4 w-4 text-blue-600" />
-                                      </Button>
-                                    </div>
-                                </div>
+                                    <TopicActionsMenu
+                                      topic={topic}
+                                      unit={unit}
+                                      onMoveUp={() => handleMoveTopicUp(topic.id, unit)}
+                                      onMoveDown={() => handleMoveTopicDown(topic.id, unit)}
+                                      onToggleVisibility={() => handleToggleTopicVisibility(topic.id)}
+                                      onAddContent={() => handleAddContentToTopic(topic.id)}
+                                      onAIGenerate={() => handleAIGenerateContent(topic.id, topic.topic, topic.short_summary)}
+                                      onEdit={() => handleEditTopic(topic)}
+                                      onDelete={() => handleDeleteTopic(topic.id)}
+                                    />
                               </div>
                             </CardHeader>
                           </CollapsibleTrigger>
