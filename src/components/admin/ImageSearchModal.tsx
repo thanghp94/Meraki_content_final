@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,9 +18,10 @@ interface ImageSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (url: string) => void;
+  initialSearchText?: string;
 }
 
-export function ImageSearchModal({ isOpen, onClose, onSelect }: ImageSearchModalProps) {
+export function ImageSearchModal({ isOpen, onClose, onSelect, initialSearchText = '' }: ImageSearchModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<ImageResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +46,17 @@ export function ImageSearchModal({ isOpen, onClose, onSelect }: ImageSearchModal
     onSelect(url);
     onClose();
   };
+
+  // Populate search term when modal opens with initial text
+  useEffect(() => {
+    if (isOpen && initialSearchText.trim()) {
+      setSearchTerm(initialSearchText.trim());
+      // Auto-search when modal opens with initial text
+      setTimeout(() => {
+        handleSearch();
+      }, 100);
+    }
+  }, [isOpen, initialSearchText]);
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>

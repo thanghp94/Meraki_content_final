@@ -28,6 +28,7 @@ import { YouTubeSearchModal } from './YouTubeSearchModal';
 import AdminQuestionDialog from './AdminQuestionDialog';
 import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import { ContentQuestionsModal } from './topic-management/components/questions/ContentQuestionsModal';
+import { ManualQuestionModal } from './ManualQuestionModal';
 
 export default function TopicManagement() {
   const { toast } = useToast();
@@ -62,6 +63,8 @@ export default function TopicManagement() {
   // Modal states
   const [selectedContentForView, setSelectedContentForView] = useState<Content | null>(null);
   const [selectedContentForQuestions, setSelectedContentForQuestions] = useState<Content | null>(null);
+  const [selectedContentForManualQuestion, setSelectedContentForManualQuestion] = useState<Content | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
   
@@ -221,8 +224,11 @@ export default function TopicManagement() {
   };
 
   const handleAddQuestion = (contentId: string) => {
-    // Implementation for adding questions
-    console.log('Add question to content:', contentId);
+    // Find the content to get its title
+    const contentItem = content.find(c => c.id === contentId);
+    if (contentItem) {
+      setSelectedContentForManualQuestion(contentItem);
+    }
   };
 
   const handleAIGenerate = (contentId: string, contentTitle: string) => {
@@ -450,8 +456,30 @@ export default function TopicManagement() {
             setSelectedContentForQuestions(null);
           }}
           onEditQuestion={(question) => {
-            setSelectedQuestion(question);
+            setEditingQuestion(question);
             setSelectedContentForQuestions(null);
+          }}
+        />
+      )}
+
+      {(selectedContentForManualQuestion || editingQuestion) && (
+        <ManualQuestionModal
+          isOpen={!!(selectedContentForManualQuestion || editingQuestion)}
+          onClose={() => {
+            setSelectedContentForManualQuestion(null);
+            setEditingQuestion(null);
+          }}
+          contentId={selectedContentForManualQuestion?.id || editingQuestion?.contentid}
+          contentTitle={selectedContentForManualQuestion?.title || 'Edit Question'}
+          editingQuestion={editingQuestion}
+          onQuestionCreated={() => {
+            setSelectedContentForManualQuestion(null);
+            setEditingQuestion(null);
+            // Optionally refresh questions or show success message
+            toast({
+              title: 'Success',
+              description: editingQuestion ? 'Question updated successfully!' : 'Question created successfully!',
+            });
           }}
         />
       )}

@@ -74,11 +74,11 @@ console.log('- contentData.text:', contentData?.text);
       case 'image':
         return contentData.image ? (
           <div className={`${showTTS ? 'flex items-start gap-2' : ''}`}>
-            <div className={`relative ${imageClassName} ${showTTS ? 'flex-1' : ''}`}>
+            <div className={`relative ${showTTS ? 'flex-1' : ''}`}>
               <img
                 src={contentData.image}
                 alt={alt}
-                className="w-full h-full object-contain"
+                className={imageClassName || "max-w-full max-h-48 object-contain"}
               />
             </div>
             {showTTS && (
@@ -114,11 +114,11 @@ console.log('- contentData.text:', contentData?.text);
             )}
             {contentData.image && (
               <div className={`${showTTS ? 'flex items-start gap-2' : ''}`}>
-                <div className={`relative ${imageClassName} ${showTTS ? 'flex-1' : ''}`}>
+                <div className={`relative ${showTTS ? 'flex-1' : ''}`}>
                   <img
                     src={contentData.image}
                     alt={alt}
-                    className="w-full h-full object-contain"
+                    className={imageClassName || "max-w-full max-h-48 object-contain"}
                   />
                 </div>
                 {showTTS && !contentData.text && (
