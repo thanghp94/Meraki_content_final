@@ -36,16 +36,42 @@ class TextToSpeechService {
         if (this.synthesis) {
           this.voices = this.synthesis.getVoices();
           this.isInitialized = true;
+          console.log('TTS voices loaded:', this.voices.length);
           resolve();
         }
       };
 
-      if (this.synthesis && this.synthesis.getVoices().length > 0) {
-        loadVoices();
-      } else if (this.synthesis) {
-        this.synthesis.addEventListener('voiceschanged', loadVoices, { once: true });
-        // Fallback timeout
-        setTimeout(loadVoices, 1000);
+      // Check if voices are already available
+      if (this.synthesis) {
+        const currentVoices = this.synthesis.getVoices();
+        if (currentVoices.length > 0) {
+          this.voices = currentVoices;
+          this.isInitialized = true;
+          console.log('TTS voices already available:', this.voices.length);
+          resolve();
+          return;
+        }
+      }
+
+      // Wait for voices to be loaded
+      let voicesLoaded = false;
+      const handleVoicesChanged = () => {
+        if (!voicesLoaded) {
+          voicesLoaded = true;
+          loadVoices();
+        }
+      };
+
+      if (this.synthesis) {
+        this.synthesis.addEventListener('voiceschanged', handleVoicesChanged);
+        
+        // Fallback timeout - some browsers don't fire voiceschanged
+        setTimeout(() => {
+          if (!voicesLoaded) {
+            voicesLoaded = true;
+            loadVoices();
+          }
+        }, 2000);
       }
     });
   }
@@ -69,6 +95,30 @@ class TextToSpeechService {
     }));
   }
 
+  public getBestVoiceForLanguage(lang: string = 'en-US'): SpeechSynthesisVoice | null {
+    if (this.voices.length === 0) return null;
+    
+    const langCode = lang.substring(0, 2);
+    
+    // Priority: local service voices first, then any voice for the language, then default
+    const bestVoice = this.voices.find(voice => 
+      voice.lang.startsWith(langCode) && voice.localService
+    ) || this.voices.find(voice => 
+      voice.lang.startsWith(langCode)
+    ) || this.voices.find(voice => 
+      voice.default
+    ) || this.voices[0];
+    
+    return bestVoice;
+  }
+
+  public logVoiceInfo(): void {
+    console.log('Available TTS Voices:');
+    this.voices.forEach((voice, index) => {
+      console.log(`${index + 1}. ${voice.name} (${voice.lang}) - Local: ${voice.localService}, Default: ${voice.default}`);
+    });
+  }
+
   public async speak(text: string, options: TTSOptions = {}): Promise<void> {
     if (!this.synthesis || !text.trim()) {
       throw new Error('Text-to-speech not supported or empty text');
@@ -85,19 +135,59 @@ class TextToSpeechService {
     return new Promise((resolve, reject) => {
       const utterance = new SpeechSynthesisUtterance(cleanText);
       
-      // Set voice options
-      utterance.rate = options.rate ?? 1;
-      utterance.pitch = options.pitch ?? 1;
-      utterance.volume = options.volume ?? 1;
+      // Set voice options with natural-sounding defaults
+      utterance.rate = Math.max(0.5, Math.min(2, options.rate ?? 1.1));
+      utterance.pitch = Math.max(0.8, Math.min(2, options.pitch ?? 1.2));
+      utterance.volume = Math.max(0.1, Math.min(1, options.volume ?? 0.9));
       utterance.lang = options.lang ?? 'en-US';
 
-      // Find and set voice
-      if (options.voice) {
+      // Find and set voice - prefer local/high-quality voices
+      if (options.voice && this.voices.length > 0) {
         const selectedVoice = this.voices.find(voice => 
           voice.name === options.voice || voice.lang.includes(options.voice!)
         );
         if (selectedVoice) {
           utterance.voice = selectedVoice;
+        }
+      } else if (this.voices.length > 0) {
+        // Auto-select best voice for the language - prefer younger, natural voices
+        const langCode = (options.lang ?? 'en-US').substring(0, 2);
+        
+        // Filter out voices that might sound old or robotic
+        const naturalVoices = this.voices.filter(voice => {
+          const name = voice.name.toLowerCase();
+          // Avoid voices that typically sound older or more robotic
+          return !name.includes('fred') && 
+                 !name.includes('albert') && 
+                 !name.includes('bad news') &&
+                 !name.includes('bahh') &&
+                 !name.includes('bells') &&
+                 !name.includes('boing') &&
+                 !name.includes('bubbles') &&
+                 !name.includes('cellos') &&
+                 !name.includes('deranged') &&
+                 !name.includes('good news') &&
+                 !name.includes('hysterical') &&
+                 !name.includes('pipe organ') &&
+                 !name.includes('trinoids') &&
+                 !name.includes('whisper') &&
+                 !name.includes('zarvox');
+        });
+        
+        const voicesToSearch = naturalVoices.length > 0 ? naturalVoices : this.voices;
+        
+        // Prefer local service voices first, then any voice for the language
+        const bestVoice = voicesToSearch.find(voice => 
+          voice.lang.startsWith(langCode) && voice.localService
+        ) || voicesToSearch.find(voice => 
+          voice.lang.startsWith(langCode)
+        ) || voicesToSearch.find(voice => 
+          voice.default
+        ) || voicesToSearch[0];
+        
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+          console.log('Selected TTS voice:', bestVoice.name, bestVoice.lang);
         }
       }
 

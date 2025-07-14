@@ -5,24 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Search, ChevronRight, FileText } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Loader2, Plus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  TopicCard, 
   UnitSelector, 
   useTopicManagement,
   Topic,
   Content
 } from './topic-management';
-import { TopicActionsMenu } from './topic-management/components/actions/TopicActionsMenu';
-import { ContentActionsMenu } from './topic-management/components/actions/ContentActionsMenu';
 
-// Import existing modals (these would need to be extracted too, but keeping them for now)
+// Import the new refactored components
+import TopicList from './topic-management/components/TopicList';
+import ContentList from './topic-management/components/ContentList';
+import TopicFormModal from './topic-management/components/TopicFormModal';
+import ContentFormModal from './topic-management/components/ContentFormModal';
+
+// Import existing modals
 import { QuizGeneratorModal } from './QuizGeneratorModal';
 import { ContentGeneratorModal } from './ContentGeneratorModal';
 import { ImageSearchModal } from './ImageSearchModal';
@@ -61,25 +59,17 @@ export default function TopicManagement() {
     fetchContent,
   } = useTopicManagement();
 
-  // Modal states (these could also be extracted to a separate hook)
-  const [showQuizGenerator, setShowQuizGenerator] = useState(false);
-  const [showContentGenerator, setShowContentGenerator] = useState(false);
-  const [showImageSearch, setShowImageSearch] = useState(false);
-  const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
-  const [showQuestionDialog, setShowQuestionDialog] = useState(false);
+  // Modal states
   const [selectedContentForView, setSelectedContentForView] = useState<Content | null>(null);
   const [selectedContentForQuestions, setSelectedContentForQuestions] = useState<Content | null>(null);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
   
   // Additional state for modal interactions
-  const [selectedTopicForContent, setSelectedTopicForContent] = useState<string>('');
-  const [selectedContentForQuestion, setSelectedContentForQuestion] = useState<string>('');
   const [selectedContentForAI, setSelectedContentForAI] = useState<{ id: string; title: string } | null>(null);
   const [selectedTopicForAI, setSelectedTopicForAI] = useState<{ id: string; name: string; summary: string } | null>(null);
   const [isTopicDialogOpen, setIsTopicDialogOpen] = useState(false);
   const [isContentDialogOpen, setIsContentDialogOpen] = useState(false);
-  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
   const [isQuizGeneratorOpen, setIsQuizGeneratorOpen] = useState(false);
   const [isContentGeneratorOpen, setIsContentGeneratorOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
@@ -104,24 +94,6 @@ export default function TopicManagement() {
     video1: '',
     video2: '',
     topicid: ''
-  });
-
-  const [questionFormData, setQuestionFormData] = useState({
-    chuong_trinh: '',
-    questionlevel: '',
-    contentid: '',
-    question_type: 'multiple_choice',
-    questionContent: { type: 'text', text: '' },
-    choice1Content: { type: 'text', text: '' },
-    choice2Content: { type: 'text', text: '' },
-    choice3Content: { type: 'text', text: '' },
-    choice4Content: { type: 'text', text: '' },
-    correct_choice: '',
-    time: '',
-    explanation: '',
-    answer: '',
-    video: '',
-    picture: ''
   });
 
   // Form submission handlers
@@ -204,7 +176,6 @@ export default function TopicManagement() {
 
   const resetContentForm = () => {
     setEditingContent(null);
-    setSelectedTopicForContent('');
     setContentFormData({
       title: '',
       infor1: '',
@@ -219,7 +190,6 @@ export default function TopicManagement() {
 
   // Handler functions for actions that need modal interactions
   const handleAddContentToTopic = (topicId: string) => {
-    setSelectedTopicForContent(topicId);
     setContentFormData(prev => ({ ...prev, topicid: topicId }));
     setIsContentDialogOpen(true);
   };
@@ -251,9 +221,8 @@ export default function TopicManagement() {
   };
 
   const handleAddQuestion = (contentId: string) => {
-    setSelectedContentForQuestion(contentId);
-    setQuestionFormData(prev => ({ ...prev, contentid: contentId }));
-    setIsQuestionDialogOpen(true);
+    // Implementation for adding questions
+    console.log('Add question to content:', contentId);
   };
 
   const handleAIGenerate = (contentId: string, contentTitle: string) => {
@@ -337,95 +306,10 @@ export default function TopicManagement() {
               className="pl-10 w-64"
             />
           </div>
-          <Dialog open={isTopicDialogOpen} onOpenChange={(open) => {
-            setIsTopicDialogOpen(open);
-            if (!open) resetTopicForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Topic
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{editingTopic ? 'Edit Topic' : 'Add New Topic'}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleTopicSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="topic">Topic Name</Label>
-                    <Input
-                      id="topic"
-                      value={topicFormData.topic}
-                      onChange={(e) => setTopicFormData(prev => ({ ...prev, topic: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="program">Program</Label>
-                    <Select
-                      value={topicFormData.program}
-                      onValueChange={(value) => setTopicFormData(prev => ({ ...prev, program: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select program" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Grapeseed">Grapeseed</SelectItem>
-                        <SelectItem value="TATH">TATH</SelectItem>
-                        <SelectItem value="WSC">WSC</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="unit">Unit</Label>
-                    <Input
-                      id="unit"
-                      value={topicFormData.unit}
-                      onChange={(e) => setTopicFormData(prev => ({ ...prev, unit: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Image URL</Label>
-                    <Input
-                      id="image"
-                      value={topicFormData.image}
-                      onChange={(e) => setTopicFormData(prev => ({ ...prev, image: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="short_summary">Summary</Label>
-                  <Textarea
-                    id="short_summary"
-                    value={topicFormData.short_summary}
-                    onChange={(e) => setTopicFormData(prev => ({ ...prev, short_summary: e.target.value }))}
-                    rows={3}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="showstudent"
-                    checked={topicFormData.showstudent}
-                    onCheckedChange={(checked) => setTopicFormData(prev => ({ ...prev, showstudent: checked }))}
-                  />
-                  <Label htmlFor="showstudent">Visible to students</Label>
-                </div>
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsTopicDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    {editingTopic ? 'Update Topic' : 'Create Topic'}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setIsTopicDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Topic
+          </Button>
         </div>
       </div>
 
@@ -437,134 +321,40 @@ export default function TopicManagement() {
         setSelectedUnit={setSelectedUnit}
       />
 
-
       {/* Topics Display */}
       {selectedUnit ? (
         <div className="space-y-6">
-          {Object.entries(topicsByUnit).map(([unit, unitTopics]) => (
-            <div key={unit}>
-              
-              {/* Topic Selector - Similar to Library View */}
-              <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-10 gap-1 mb-4">
-                {unitTopics.map((topic) => {
-                  const topicContent = content
-                    .filter(c => c.topicid === topic.id || c.topic_id === topic.id)
-                    .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-                  
-                  const isSelected = selectedTopicForView === topic.id;
-                  
-                  return (
-                    <Card 
-                      key={topic.id}
-                      className={`cursor-pointer transition-all hover:shadow-md ${
-                        isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
-                      } ${topic.visible === false ? 'opacity-50' : ''}`}
-                      onClick={() => setSelectedTopicForView(topic.id)}
-                    >
-                      <div className="px-2 py-0.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1 flex-1 min-w-0">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1">
-                                <h3 className="font-medium text-xs truncate">{topic.topic}</h3>
-                                <Badge variant="secondary" className="text-xs h-3 px-1 shrink-0">
-                                  {topicContent.length}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                          <TopicActionsMenu
-                            topic={topic}
-                            unit={unit}
-                            onMoveUp={() => handleMoveTopicUp(topic.id, unit)}
-                            onMoveDown={() => handleMoveTopicDown(topic.id, unit)}
-                            onToggleVisibility={() => handleToggleTopicVisibility(topic.id)}
-                            onAddContent={() => handleAddContentToTopic(topic.id)}
-                            onAIGenerate={() => handleAIGenerateContent(topic.id, topic.topic, topic.short_summary)}
-                            onEdit={() => handleEditTopic(topic)}
-                            onDelete={() => handleDeleteTopic(topic.id)}
-                          />
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
+          <TopicList
+            topicsByUnit={topicsByUnit}
+            content={content}
+            selectedTopicForView={selectedTopicForView}
+            setSelectedTopicForView={setSelectedTopicForView}
+            handleMoveTopicUp={handleMoveTopicUp}
+            handleMoveTopicDown={handleMoveTopicDown}
+            handleToggleTopicVisibility={handleToggleTopicVisibility}
+            handleDeleteTopic={handleDeleteTopic}
+            handleAddContentToTopic={handleAddContentToTopic}
+            handleAIGenerateContent={handleAIGenerateContent}
+            handleEditTopic={handleEditTopic}
+          />
 
-              {/* Content Display Area - Shows when topic is selected */}
-              {selectedTopicForView && (
-                <div className="border rounded-lg bg-white">
-                  <div className="p-4">
-                    {(() => {
-                      const selectedTopicContent = content
-                        .filter(c => (c.topicid === selectedTopicForView || c.topic_id === selectedTopicForView))
-                        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-                      
-                      if (selectedTopicContent.length === 0) {
-                        return (
-                          <div className="text-center py-8 text-gray-500">
-                            <p>No content available for this topic</p>
-                            <Button 
-                              onClick={() => handleAddContentToTopic(selectedTopicForView)}
-                              className="mt-4"
-                              size="sm"
-                            >
-                              Add Content
-                            </Button>
-                          </div>
-                        );
-                      }
-                      
-                      return (
-                        <div className="grid grid-cols-2 gap-2">
-                          {selectedTopicContent.map((contentItem) => {
-                            const contentQuestions = questions.filter(q => 
-                              q.contentid === contentItem.id || q.content_id === contentItem.id
-                            );
-                            return (
-                              <Card key={contentItem.id} className="hover:shadow-sm transition-shadow">
-                                <div className="p-2">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                      <FileText className="h-3 w-3 text-green-600 shrink-0" />
-                                      <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-2">
-                                          <h4 className="font-medium text-xs truncate">{contentItem.title}</h4>
-                                          <Badge variant="outline" className="text-xs h-4 px-1 shrink-0">
-                                            {contentQuestions.length}Q
-                                          </Badge>
-                                        </div>
-                                        {contentItem.infor1 && (
-                                          <span className="text-xs text-gray-500 truncate block mt-1">• {contentItem.infor1}</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <ContentActionsMenu
-                                      contentItem={contentItem}
-                                      topicId={selectedTopicForView}
-                                      onMoveUp={() => handleMoveContentUp(contentItem.id, selectedTopicForView)}
-                                      onMoveDown={() => handleMoveContentDown(contentItem.id, selectedTopicForView)}
-                                      onToggleVisibility={() => handleToggleContentVisibility(contentItem.id)}
-                                      onView={() => handleViewContent(contentItem)}
-                                      onViewQuestions={() => handleViewQuestions(contentItem)}
-                                      onAddQuestion={() => handleAddQuestion(contentItem.id)}
-                                      onAIGenerate={() => handleAIGenerate(contentItem.id, contentItem.title)}
-                                      onEdit={() => handleEditContent(contentItem)}
-                                      onDelete={() => handleDeleteContent(contentItem.id)}
-                                    />
-                                  </div>
-                                </div>
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+          {/* Content Display Area - Shows when topic is selected */}
+          {selectedTopicForView && (
+            <ContentList
+              content={content}
+              questions={questions}
+              selectedTopicForView={selectedTopicForView}
+              handleMoveContentUp={handleMoveContentUp}
+              handleMoveContentDown={handleMoveContentDown}
+              handleToggleContentVisibility={handleToggleContentVisibility}
+              handleViewContent={handleViewContent}
+              handleViewQuestions={handleViewQuestions}
+              handleAddQuestion={handleAddQuestion}
+              handleAIGenerate={handleAIGenerate}
+              handleEditContent={handleEditContent}
+              handleDeleteContent={handleDeleteContent}
+            />
+          )}
         </div>
       ) : (
         <div className="text-center py-12">
@@ -578,100 +368,35 @@ export default function TopicManagement() {
         </div>
       )}
 
-      {/* Content Creation Dialog */}
-      <Dialog open={isContentDialogOpen} onOpenChange={(open) => {
-        setIsContentDialogOpen(open);
-        if (!open) resetContentForm();
-      }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingContent ? 'Edit Content' : 'Add New Content'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleContentSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="content-title">Title</Label>
-              <Input
-                id="content-title"
-                value={contentFormData.title}
-                onChange={(e) => setContentFormData(prev => ({ ...prev, title: e.target.value }))}
-                required
-              />
-            </div>
+      {/* Topic Form Modal */}
+      <TopicFormModal
+        isOpen={isTopicDialogOpen}
+        onOpenChange={(open) => {
+          setIsTopicDialogOpen(open);
+          if (!open) resetTopicForm();
+        }}
+        editingTopic={editingTopic}
+        topicFormData={topicFormData}
+        setTopicFormData={setTopicFormData}
+        handleTopicSubmit={handleTopicSubmit}
+        resetTopicForm={resetTopicForm}
+      />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="content-infor1">Description</Label>
-                <Textarea
-                  id="content-infor1"
-                  value={contentFormData.infor1}
-                  onChange={(e) => setContentFormData(prev => ({ ...prev, infor1: e.target.value }))}
-                  rows={4}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="content-infor2">Additional Information</Label>
-                <Textarea
-                  id="content-infor2"
-                  value={contentFormData.infor2}
-                  onChange={(e) => setContentFormData(prev => ({ ...prev, infor2: e.target.value }))}
-                  rows={4}
-                />
-              </div>
-            </div>
+      {/* Content Form Modal */}
+      <ContentFormModal
+        isOpen={isContentDialogOpen}
+        onOpenChange={(open) => {
+          setIsContentDialogOpen(open);
+          if (!open) resetContentForm();
+        }}
+        editingContent={editingContent}
+        contentFormData={contentFormData}
+        setContentFormData={setContentFormData}
+        handleContentSubmit={handleContentSubmit}
+        resetContentForm={resetContentForm}
+      />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="content-image1">Image 1 URL</Label>
-                <Input
-                  id="content-image1"
-                  value={contentFormData.image1}
-                  onChange={(e) => setContentFormData(prev => ({ ...prev, image1: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="content-image2">Image 2 URL</Label>
-                <Input
-                  id="content-image2"
-                  value={contentFormData.image2}
-                  onChange={(e) => setContentFormData(prev => ({ ...prev, image2: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="content-video1">Video 1 URL</Label>
-                <Input
-                  id="content-video1"
-                  value={contentFormData.video1}
-                  onChange={(e) => setContentFormData(prev => ({ ...prev, video1: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="content-video2">Video 2 URL</Label>
-                <Input
-                  id="content-video2"
-                  value={contentFormData.video2}
-                  onChange={(e) => setContentFormData(prev => ({ ...prev, video2: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsContentDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {editingContent ? 'Update Content' : 'Create Content'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modals */}
+      {/* Other Modals */}
       {selectedContentForAI && (
         <QuizGeneratorModal
           isOpen={isQuizGeneratorOpen}
@@ -695,28 +420,6 @@ export default function TopicManagement() {
           topicName={selectedTopicForAI.name}
           topicSummary={selectedTopicForAI.summary}
           onContentGenerated={fetchContent}
-        />
-      )}
-
-      {showImageSearch && (
-        <ImageSearchModal
-          isOpen={showImageSearch}
-          onClose={() => setShowImageSearch(false)}
-          onSelect={(url) => {
-            // Handle image selection - this would need proper implementation
-            setShowImageSearch(false);
-          }}
-        />
-      )}
-
-      {showYouTubeSearch && (
-        <YouTubeSearchModal
-          isOpen={showYouTubeSearch}
-          onClose={() => setShowYouTubeSearch(false)}
-          onSelect={(url) => {
-            // Handle video selection - this would need proper implementation
-            setShowYouTubeSearch(false);
-          }}
         />
       )}
 

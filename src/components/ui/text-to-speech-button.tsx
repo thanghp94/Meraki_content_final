@@ -27,9 +27,9 @@ export default function TextToSpeechButton({
   size = 'sm',
   className = '',
   disabled = false,
-  rate = 1,
-  pitch = 1,
-  volume = 1,
+  rate = 1.1,
+  pitch = 1.2,
+  volume = 0.9,
   voice,
   lang = 'en-US',
   showLabel = false,
@@ -56,16 +56,23 @@ export default function TextToSpeechButton({
   useEffect(() => {
     // Monitor speaking state
     const checkSpeakingState = () => {
+      if (!ttsService.isSupported()) return;
+      
       const speaking = isSpeaking();
       const paused = ttsService.isPaused();
       
-      setIsPlaying(speaking || paused);
-      setIsPaused(paused);
+      // Only update state if there's a change to avoid unnecessary re-renders
+      if (isPlaying !== (speaking || paused)) {
+        setIsPlaying(speaking || paused);
+      }
+      if (isPaused !== paused) {
+        setIsPaused(paused);
+      }
     };
 
-    const interval = setInterval(checkSpeakingState, 100);
+    const interval = setInterval(checkSpeakingState, 200);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPlaying, isPaused]);
 
   const handleSpeak = async () => {
     if (!text.trim()) {
@@ -92,28 +99,41 @@ export default function TextToSpeechButton({
         stopSpeaking();
         setIsPlaying(false);
         setIsPaused(false);
-      } else if (isPaused) {
+        return;
+      } 
+      
+      if (isPaused) {
         // Currently paused, so resume
         resumeSpeaking();
         setIsPaused(false);
-      } else {
-        // Not playing, so start
-        setIsLoading(true);
-        await speakText(text, {
-          rate,
-          pitch,
-          volume,
-          voice,
-          lang
-        });
-        setIsPlaying(false);
-        setIsPaused(false);
+        setIsPlaying(true);
+        return;
       }
+      
+      // Not playing, so start
+      setIsLoading(true);
+      setIsPlaying(true);
+      
+      // Ensure TTS service is initialized
+      await ttsService.ensureInitialized();
+      
+      await speakText(text, {
+        rate,
+        pitch,
+        volume,
+        voice,
+        lang
+      });
+      
+      // Speech completed successfully
+      setIsPlaying(false);
+      setIsPaused(false);
+      
     } catch (error) {
       console.error('TTS Error:', error);
       toast({
         title: 'Speech Error',
-        description: 'Failed to play text-to-speech',
+        description: error instanceof Error ? error.message : 'Failed to play text-to-speech',
         variant: 'destructive',
       });
       setIsPlaying(false);

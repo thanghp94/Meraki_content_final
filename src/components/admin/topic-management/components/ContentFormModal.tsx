@@ -26,11 +26,6 @@ export default function ContentFormModal({
 }: ContentFormModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button>
-          {editingContent ? 'Edit Content' : 'Add Content'}
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
