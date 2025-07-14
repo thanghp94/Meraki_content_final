@@ -30,7 +30,8 @@ export interface Content {
 export interface Question {
   id: string;
   question: string;
-  content_id?: string;
+  contentid?: string;
+  content_id?: string; // Keep both for backward compatibility
   visible?: boolean;
 }
 

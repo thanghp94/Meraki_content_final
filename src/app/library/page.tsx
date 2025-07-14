@@ -141,7 +141,7 @@ export default function LibraryPage() {
     <div className="flex flex-col h-full min-h-screen">
       <Header />
 
-      <div className="bg-background" style={{ padding: 'var(--spacing-6)' }}>
+      <div className="pt-20" style={{ padding: 'var(--spacing-6)' }}>
         {/* Navigation Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2">

@@ -3,33 +3,68 @@ import { db } from '@/lib/database';
 import { sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const result = await db.execute(sql`
-      SELECT 
-        q.id,
-        q.chuong_trinh,
-        q.questionlevel,
-        q.contentid,
-        q.question_type,
-        q.noi_dung,
-        q.video,
-        q.picture,
-        q.cau_tra_loi_1,
-        q.cau_tra_loi_2,
-        q.cau_tra_loi_3,
-        q.cau_tra_loi_4,
-        q.correct_choice,
-        q.time,
-        q.explanation,
-        q.answer,
-        q.tg_tao,
-        c."Title" as content_title
-      FROM meraki.question q
-      LEFT JOIN meraki.content c ON q.contentid = c.id::text
-      ORDER BY q.tg_tao DESC NULLS LAST
-    `);
+    const { searchParams } = new URL(request.url);
+    const contentId = searchParams.get('contentId');
 
+    let query;
+    if (contentId) {
+      // Filter by specific content ID
+      query = sql`
+        SELECT 
+          q.id,
+          q.chuong_trinh,
+          q.questionlevel,
+          q.contentid,
+          q.question_type,
+          q.noi_dung,
+          q.video,
+          q.picture,
+          q.cau_tra_loi_1,
+          q.cau_tra_loi_2,
+          q.cau_tra_loi_3,
+          q.cau_tra_loi_4,
+          q.correct_choice,
+          q.time,
+          q.explanation,
+          q.answer,
+          q.tg_tao,
+          c."Title" as content_title
+        FROM meraki.question q
+        LEFT JOIN meraki.content c ON q.contentid = c.id::text
+        WHERE q.contentid = ${contentId}
+        ORDER BY q.tg_tao DESC NULLS LAST
+      `;
+    } else {
+      // Return all questions
+      query = sql`
+        SELECT 
+          q.id,
+          q.chuong_trinh,
+          q.questionlevel,
+          q.contentid,
+          q.question_type,
+          q.noi_dung,
+          q.video,
+          q.picture,
+          q.cau_tra_loi_1,
+          q.cau_tra_loi_2,
+          q.cau_tra_loi_3,
+          q.cau_tra_loi_4,
+          q.correct_choice,
+          q.time,
+          q.explanation,
+          q.answer,
+          q.tg_tao,
+          c."Title" as content_title
+        FROM meraki.question q
+        LEFT JOIN meraki.content c ON q.contentid = c.id::text
+        ORDER BY q.tg_tao DESC NULLS LAST
+      `;
+    }
+
+    const result = await db.execute(query);
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching questions:', error);

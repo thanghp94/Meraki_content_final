@@ -1,16 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { LayoutGrid, Settings, Library, Eye, LogOut, User } from 'lucide-react';
+import Image from 'next/image';
+import { Settings, Library as LibraryIcon, Eye, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import '@/styles/figma-design-system.css';
 
 export default function Header() {
   const { user, logout, hasAnyRole } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = () => {
     logout();
@@ -30,33 +32,38 @@ export default function Header() {
     }
   };
 
+  const isActive = (href: string) => {
+    return pathname === href;
+  };
+
   return (
-    <header className="bg-background border-b" style={{ borderColor: 'var(--colors-border)', boxShadow: 'var(--shadow-sm)' }}>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b" style={{ borderColor: 'var(--colors-border)', boxShadow: 'var(--shadow-sm)' }}>
       <div className="max-w-screen-xl mx-auto px-6">
         <div className="flex items-center justify-between" style={{ padding: 'var(--spacing-4) 0' }}>
-          <Link href="/" className="flex items-center gap-2 text-foreground hover:opacity-80" 
-                style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', transition: 'var(--transition-normal)' }}>
-            <LayoutGrid size={28} />
-            GridWise Quizzing
+          <Link href="/" className="flex items-center gap-2 text-foreground hover:opacity-80" style={{ fontWeight: 'var(--font-bold)', transition: 'var(--transition-normal)' }}>
+            <span className="text-xl">Meraki Learning</span>
           </Link>
           
-          <nav className="flex items-center" style={{ gap: 'var(--spacing-2)' }}>
+          <nav className="flex items-center space-x-4">
             <Link href="/library">
-              <Button variant="outline" size="sm" className="button button--outline">
-                <Library className="h-4 w-4 mr-2" />
+              <Button
+                variant={isActive('/library') ? 'default' : 'outline'}
+                size="lg"
+                className="flex items-center gap-2 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              >
+                <LibraryIcon className="h-5 w-5" />
                 Library
               </Button>
             </Link>
-            <Link href="/content-demo">
-              <Button variant="outline" size="sm" className="button button--outline">
-                <Eye className="h-4 w-4 mr-2" />
-                Content Demo
-              </Button>
-            </Link>
+            {/* Content Demo button removed as requested */}
             {hasAnyRole(['admin', 'teacher']) && (
               <Link href="/admin">
-                <Button variant="outline" size="sm" className="button button--outline">
-                  <Settings className="h-4 w-4 mr-2" />
+                <Button
+                  variant={isActive('/admin') ? 'default' : 'outline'}
+                  size="lg"
+                  className="flex items-center gap-2 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                >
+                  <Settings className="h-5 w-5" />
                   Admin
                 </Button>
               </Link>
@@ -65,7 +72,7 @@ export default function Header() {
             {user && (
               <div className="flex items-center gap-2 ml-4 pl-4 border-l">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
+                  <User className="h-5 w-5" />
                   <span className="text-sm font-medium">{user.name}</span>
                   <Badge className={getRoleBadgeColor()}>
                     {user.role}

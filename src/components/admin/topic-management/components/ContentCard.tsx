@@ -11,6 +11,7 @@ interface ContentCardProps {
   onMoveDown: () => void;
   onToggleVisibility: () => void;
   onView: () => void;
+  onViewQuestions: () => void;
   onAddQuestion: () => void;
   onAIGenerate: () => void;
   onEdit: () => void;
@@ -24,6 +25,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   onMoveDown,
   onToggleVisibility,
   onView,
+  onViewQuestions,
   onAddQuestion,
   onAIGenerate,
   onEdit,
@@ -48,6 +50,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
           onMoveDown={onMoveDown}
           onToggleVisibility={onToggleVisibility}
           onView={onView}
+          onViewQuestions={onViewQuestions}
           onAddQuestion={onAddQuestion}
           onAIGenerate={onAIGenerate}
           onEdit={onEdit}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { 
-  MoreHorizontal, ArrowUp, ArrowDown, Eye, EyeOff, FileText, Plus, Sparkles, Pencil, Trash2
+  MoreHorizontal, ArrowUp, ArrowDown, Eye, EyeOff, FileText, Plus, Sparkles, Pencil, Trash2, HelpCircle
 } from 'lucide-react';
 
 interface Content {
@@ -18,6 +18,7 @@ interface ContentActionsMenuProps {
   onMoveDown: () => void;
   onToggleVisibility: () => void;
   onView: () => void;
+  onViewQuestions: () => void;
   onAddQuestion: () => void;
   onAIGenerate: () => void;
   onEdit: () => void;
@@ -31,6 +32,7 @@ export const ContentActionsMenu: React.FC<ContentActionsMenuProps> = ({
   onMoveDown, 
   onToggleVisibility, 
   onView, 
+  onViewQuestions,
   onAddQuestion, 
   onAIGenerate, 
   onEdit, 
@@ -73,6 +75,10 @@ export const ContentActionsMenu: React.FC<ContentActionsMenuProps> = ({
       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onView(); }}>
         <FileText className="h-4 w-4 mr-2 text-blue-600" />
         View Content
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewQuestions(); }}>
+        <HelpCircle className="h-4 w-4 mr-2 text-green-600" />
+        View Questions
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAddQuestion(); }}>

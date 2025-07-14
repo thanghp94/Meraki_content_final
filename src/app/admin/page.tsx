@@ -9,7 +9,7 @@ export default function AdminPage() {
     <ProtectedRoute requiredRoles={['admin', 'teacher']}>
       <div className="flex flex-col h-full min-h-screen">
         <Header />
-        <div className="flex-grow p-4 sm:p-6 container mx-auto max-w-7xl">
+        <div className="flex-grow p-4 sm:p-6 container mx-auto max-w-7xl pt-20">
           <TopicManagement />
         </div>
       </div>

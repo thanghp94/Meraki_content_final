@@ -40,7 +40,7 @@ export const TopicActionsMenu: React.FC<TopicActionsMenuProps> = ({
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 w-8 p-0"
+        className="h-6 w-6 p-0"
         onClick={(e) => e.stopPropagation()}
       >
         <MoreHorizontal className="h-4 w-4" />
