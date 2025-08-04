@@ -48,7 +48,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
       className={`hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${cardColors[colorIndex]} ${borderColors[colorIndex]} border-4 rounded-2xl cursor-pointer overflow-hidden`}
       onClick={() => onContentClick(content.id)}
     >
-      <CardContent className="p-4">
+      <CardContent className="px-3 py-2">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-grow min-w-0">
             <div className="flex items-center justify-center w-6 h-6 text-xs font-bold border-2 border-white rounded-full bg-white text-gray-700 shadow-md flex-shrink-0">

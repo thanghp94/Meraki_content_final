@@ -117,7 +117,7 @@ export default function TopicManagement() {
       />
 
       {/* Unit Selector */}
-      <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl shadow-lg p-4 mb-6 border-4 border-yellow-300">
+      <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl shadow-lg p-4 mb-2 border-4 border-yellow-300">
         <UnitSelector
           topics={topics}
           selectedProgram={selectedProgram}
@@ -128,7 +128,7 @@ export default function TopicManagement() {
 
       {/* Main Content */}
       {selectedUnit ? (
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Topics Display */}
           <TopicList
             topicsByUnit={topicsByUnit}

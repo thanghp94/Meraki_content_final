@@ -23,7 +23,7 @@ export const TopicManagementHeader: React.FC<TopicManagementHeaderProps> = ({
   onAddTopic
 }) => {
   return (
-    <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-2xl shadow-xl py-2 px-4 mb-6 border-4 border-white/20">
+    <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-2xl shadow-xl py-2 px-4 mb-2 border-4 border-white/20">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white drop-shadow-lg">📚 Content</h1>

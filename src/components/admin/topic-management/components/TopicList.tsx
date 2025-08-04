@@ -35,7 +35,7 @@ export default function TopicList({
     <>
       {Object.entries(topicsByUnit).map(([unit, unitTopics]) => (
         <div key={unit}>
-          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-10 gap-1 mb-4">
+          <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 2xl:grid-cols-14 gap-1 mb-4">
             {unitTopics.map((topic) => {
               const topicContent = content
                 .filter(c => c.topicid === topic.id || c.topic_id === topic.id)
@@ -46,34 +46,33 @@ export default function TopicList({
               return (
                 <Card 
                   key={topic.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
+                  className={`group cursor-pointer transition-all hover:shadow-md ${
                     isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
                   } ${topic.visible === false ? 'opacity-50' : ''}`}
                   onClick={() => setSelectedTopicForView(topic.id)}
                 >
-                  <div className="px-2 py-0.5">
+                  <div className="pl-2 pr-0.5 py-0.5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 flex-1 min-w-0">
+                      <div className="flex items-center flex-1 min-w-0">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1">
-                            <h3 className="font-medium text-xs truncate">{topic.topic}</h3>
-                            <Badge variant="secondary" className="text-xs h-3 px-1 shrink-0">
-                              {topicContent.length}
-                            </Badge>
-                          </div>
+                          <h3 className="font-medium text-xs">{topic.topic}</h3>
                         </div>
                       </div>
-                      <TopicActionsMenu
-                        topic={topic}
-                        unit={unit}
-                        onMoveUp={() => handleMoveTopicUp(topic.id, unit)}
-                        onMoveDown={() => handleMoveTopicDown(topic.id, unit)}
-                        onToggleVisibility={() => handleToggleTopicVisibility(topic.id)}
-                        onAddContent={() => handleAddContentToTopic(topic.id)}
-                        onAIGenerate={() => handleAIGenerateContent(topic.id, topic.topic, topic.short_summary)}
-                        onEdit={() => handleEditTopic(topic)}
-                        onDelete={() => handleDeleteTopic(topic.id)}
-                      />
+                      <div className="opacity-100">
+                        <div className="scale-50">
+                          <TopicActionsMenu
+                            topic={topic}
+                            unit={unit}
+                            onMoveUp={() => handleMoveTopicUp(topic.id, unit)}
+                            onMoveDown={() => handleMoveTopicDown(topic.id, unit)}
+                            onToggleVisibility={() => handleToggleTopicVisibility(topic.id)}
+                            onAddContent={() => handleAddContentToTopic(topic.id)}
+                            onAIGenerate={() => handleAIGenerateContent(topic.id, topic.topic, topic.short_summary)}
+                            onEdit={() => handleEditTopic(topic)}
+                            onDelete={() => handleDeleteTopic(topic.id)}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </Card>

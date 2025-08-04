@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { EmptyState } from './EmptyState';
 import { TopicButton } from '../topics/TopicButton';
@@ -34,6 +34,23 @@ export const MainContent: React.FC<MainContentProps> = ({
   onContentPlayClick,
   onContentReviewClick
 }) => {
+  // Global state to track which button is active across all topics
+  const [activeButton, setActiveButton] = useState<{topicId: string, buttonType: 'play' | 'review'} | null>(null);
+
+  const handleTopicPlayClick = (topic: Topic, topicContent: Content[]) => {
+    setActiveButton({topicId: topic.id, buttonType: 'play'});
+    onTopicPlayClick(topic, topicContent);
+    // Reset after a delay to show the effect
+    setTimeout(() => setActiveButton(null), 2000);
+  };
+
+  const handleTopicReviewClick = (topic: Topic, topicContent: Content[]) => {
+    setActiveButton({topicId: topic.id, buttonType: 'review'});
+    onTopicReviewClick?.(topic, topicContent);
+    // Reset after a delay to show the effect
+    setTimeout(() => setActiveButton(null), 2000);
+  };
+
   if (expandedUnits.size === 0) {
     return <EmptyState />;
   }
@@ -55,14 +72,15 @@ export const MainContent: React.FC<MainContentProps> = ({
                   
                   return (
                     <TopicButton
-                      key={topic.id}
+                      key={`${unitGroup.unit}-${topic.id}-${index}`}
                       topic={topic}
                       index={index}
                       isExpanded={expandedTopics.has(topic.id)}
                       topicContent={topicContent}
                       onTopicClick={onTopicClick}
-                      onPlayClick={onTopicPlayClick}
-                      onReviewClick={onTopicReviewClick}
+                      onPlayClick={handleTopicPlayClick}
+                      onReviewClick={handleTopicReviewClick}
+                      globalActiveButton={activeButton}
                     />
                   );
                 })}

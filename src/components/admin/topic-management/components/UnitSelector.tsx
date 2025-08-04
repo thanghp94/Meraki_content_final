@@ -38,8 +38,8 @@ export const UnitSelector: React.FC<UnitSelectorProps> = ({
   ));
 
   return (
-    <div className="mb-4">
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-2">
+      <div className="flex flex-wrap gap-1">
         {availableUnits.map((unit, index) => {
           const unitNumber = unit.replace('Unit ', '');
           const topicsInUnit = topics.filter(t => t.unit === unit && t.program === 'Grapeseed');
@@ -62,31 +62,31 @@ export const UnitSelector: React.FC<UnitSelectorProps> = ({
               key={unit}
               onClick={() => setSelectedUnit(unit)}
               className={`
-                relative group min-w-[50px] h-8 rounded-lg text-xs font-bold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg border
+                relative group w-7 h-6 rounded text-xs font-bold transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md border
                 ${selectedUnit === unit 
-                  ? `bg-gradient-to-r ${gradientColors[colorIndex]} text-white border-white shadow-lg scale-105` 
+                  ? `bg-gradient-to-r ${gradientColors[colorIndex]} text-white border-white shadow-md scale-105` 
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
                 }
               `}
               title={`${unit} (${topicsInUnit.length} topics)`}
             >
-              <div className="flex items-center justify-center h-full px-2">
-                <span className="text-sm font-black">{unitNumber}</span>
+              <div className="flex items-center justify-center h-full">
+                <span className="text-xs font-black">{unitNumber}</span>
               </div>
               
               {/* Topic count badge */}
               <div className={`
-                absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs font-bold flex items-center justify-center
+                absolute -top-1 -right-1 w-3 h-3 rounded-full text-xs font-bold flex items-center justify-center
                 ${selectedUnit === unit 
                   ? 'bg-white text-purple-600' 
                   : 'bg-purple-500 text-white'
                 }
               `}>
-                {topicsInUnit.length}
+                <span className="text-[8px]">{topicsInUnit.length}</span>
               </div>
               
               {/* Hover effect overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded"></div>
             </button>
           );
         })}
