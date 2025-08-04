@@ -17,6 +17,7 @@ interface MainContentProps {
   onTopicPlayClick: (topic: Topic, topicContent: Content[]) => void;
   onContentClick: (contentId: string) => void;
   onContentPlayClick: (content: Content) => void;
+  onContentReviewClick?: (content: Content) => void;
 }
 
 export const MainContent: React.FC<MainContentProps> = ({
@@ -28,7 +29,8 @@ export const MainContent: React.FC<MainContentProps> = ({
   onTopicClick,
   onTopicPlayClick,
   onContentClick,
-  onContentPlayClick
+  onContentPlayClick,
+  onContentReviewClick
 }) => {
   if (expandedUnits.size === 0) {
     return <EmptyState />;
@@ -87,6 +89,7 @@ export const MainContent: React.FC<MainContentProps> = ({
                             index={index}
                             onContentClick={onContentClick}
                             onPlayClick={onContentPlayClick}
+                            onReviewClick={onContentReviewClick}
                           />
                         ))}
                       </div>

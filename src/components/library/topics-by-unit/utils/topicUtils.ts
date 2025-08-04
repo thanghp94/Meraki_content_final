@@ -21,15 +21,20 @@ export const getContentForTopic = (topic: Topic, content: Content[]): Content[] 
 export const loadTopicContent = async (topicId: string): Promise<Content[]> => {
   try {
     console.log('Fetching content for topic:', topicId);
-    const url = `/api/admin/content/paginated?topicIds=${topicId}&limit=50`;
+    const url = `/api/admin/content/paginated?topicIds=${encodeURIComponent(topicId)}&limit=50`;
     console.log('Fetching from URL:', url);
     
-    const contentResponse = await fetch(url);
+    const contentResponse = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (!contentResponse.ok) {
       const errorText = await contentResponse.text();
-      console.error('API Error:', contentResponse.status, errorText);
-      throw new Error(`Failed to fetch topic content: ${contentResponse.status}`);
+      console.error('API Error:', contentResponse.status, contentResponse.statusText, errorText);
+      throw new Error(`Failed to fetch topic content: ${contentResponse.status} - ${contentResponse.statusText}`);
     }
     
     const contentData = await contentResponse.json();
@@ -39,21 +44,35 @@ export const loadTopicContent = async (topicId: string): Promise<Content[]> => {
   } catch (error) {
     console.error('Error fetching content for topic:', topicId, error);
     
+    // Check if it's a network error
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      console.error('Network error - server might be down or unreachable');
+    }
+    
     // Fallback: try to get content from the original API
     try {
       console.log('Trying fallback API for topic:', topicId);
-      const fallbackResponse = await fetch('/api/admin/content');
+      const fallbackResponse = await fetch('/api/admin/content', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
       if (fallbackResponse.ok) {
         const fallbackData = await fallbackResponse.json();
         const topicContent = fallbackData.filter((item: any) => item.topicid === topicId);
         console.log('Fallback: Found', topicContent.length, 'content items');
         return topicContent;
+      } else {
+        console.error('Fallback API also returned error:', fallbackResponse.status, fallbackResponse.statusText);
       }
     } catch (fallbackError) {
       console.error('Fallback API also failed:', fallbackError);
     }
     
+    // Return empty array instead of throwing to prevent UI crashes
+    console.warn('Returning empty content array for topic:', topicId);
     return [];
   }
 };

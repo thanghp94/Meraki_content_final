@@ -33,21 +33,27 @@ export async function GET(request: NextRequest) {
       WHERE 1=1
     `;
 
-    // Add filters
+    // Add filters with proper escaping to prevent SQL injection
     if (topicIds) {
       const topicIdArray = topicIds.split(',').filter(id => id.trim());
       if (topicIdArray.length > 0) {
-        const placeholders = topicIdArray.map(id => `'${id}'`).join(',');
+        // Sanitize topic IDs (should be UUIDs)
+        const sanitizedIds = topicIdArray.map(id => id.replace(/[^a-zA-Z0-9-]/g, ''));
+        const placeholders = sanitizedIds.map(id => `'${id}'`).join(',');
         query += ` AND c.topicid IN (${placeholders})`;
       }
     }
 
     if (program) {
-      query += ` AND t.program = '${program}'`;
+      // Sanitize program name
+      const sanitizedProgram = program.replace(/'/g, "''");
+      query += ` AND t.program = '${sanitizedProgram}'`;
     }
 
     if (unit) {
-      query += ` AND t.unit = '${unit}'`;
+      // Sanitize unit name
+      const sanitizedUnit = unit.replace(/'/g, "''");
+      query += ` AND t.unit = '${sanitizedUnit}'`;
     }
 
     query += `

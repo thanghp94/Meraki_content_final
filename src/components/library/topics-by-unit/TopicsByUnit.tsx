@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import GameSetupModal from '@/components/library/GameSetupModal';
+import UnifiedReviewModal from '@/components/quiz/UnifiedReviewModal';
 
 // Import refactored components
 import { TopicsByUnitLayout } from './components/layout/TopicsByUnitLayout';
@@ -40,6 +41,8 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
   const [isGameSetupModalOpen, setIsGameSetupModalOpen] = useState(false);
   const [gameSetupData, setGameSetupData] = useState<GameSetupData>({});
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewContent, setReviewContent] = useState<Content | null>(null);
 
   // Prevent hydration issues by not rendering until mounted
   if (!isMounted) {
@@ -114,6 +117,17 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
     setIsGameSetupModalOpen(true);
   };
 
+  const handleContentReview = (content: Content) => {
+    console.log('Opening review modal for content:', content.title);
+    setReviewContent(content);
+    setIsReviewModalOpen(true);
+  };
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
+    setReviewContent(null);
+  };
+
   // Render sidebar
   const sidebar = (
     <Sidebar
@@ -139,6 +153,7 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
       onTopicPlayClick={handleTopicPlay}
       onContentClick={handleViewContent}
       onContentPlayClick={handleContentPlay}
+      onContentReviewClick={handleContentReview}
     />
   );
 
@@ -169,6 +184,15 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
         selectedTopicName={gameSetupData.topicName}
         unitTopics={gameSetupData.unitTopics}
       />
+
+      {/* Review Modal */}
+      {reviewContent && (
+        <UnifiedReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={closeReviewModal}
+          content={reviewContent}
+        />
+      )}
     </>
   );
 }
