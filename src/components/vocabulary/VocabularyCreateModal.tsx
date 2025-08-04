@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Search, Save, Loader2 } from 'lucide-react';
+import { X, Plus, Search, Save, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ImageSearchModal } from '@/components/admin/ImageSearchModal';
 
@@ -40,13 +40,68 @@ export default function VocabularyCreateModal({
   const [newTag, setNewTag] = useState('');
   const [saving, setSaving] = useState(false);
   const [showImageSearch, setShowImageSearch] = useState(false);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState<{
+    isDuplicate: boolean;
+    existingWord?: {
+      id: string;
+      word: string;
+      partOfSpeech: string;
+      definition: string;
+    };
+  } | null>(null);
+  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
   const { toast } = useToast();
+
+  // Debounced duplicate check function
+  const checkForDuplicate = useCallback(async (word: string) => {
+    if (!word.trim()) {
+      setDuplicateInfo(null);
+      return;
+    }
+
+    try {
+      setCheckingDuplicate(true);
+      const response = await fetch(`/api/vocabulary/check-duplicate?word=${encodeURIComponent(word.trim())}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDuplicateInfo(data);
+      } else {
+        console.error('Failed to check for duplicate');
+        setDuplicateInfo(null);
+      }
+    } catch (error) {
+      console.error('Error checking for duplicate:', error);
+      setDuplicateInfo(null);
+    } finally {
+      setCheckingDuplicate(false);
+    }
+  }, []);
+
+  // Debounce the duplicate check
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.word) {
+        checkForDuplicate(formData.word);
+      } else {
+        setDuplicateInfo(null);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.word, checkForDuplicate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // Reset duplicate confirmation if word changes
+    if (field === 'word') {
+      setShowDuplicateConfirm(false);
+    }
   };
 
   const handleAddTag = () => {
@@ -74,13 +129,19 @@ export default function VocabularyCreateModal({
     setShowImageSearch(false);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (forceSave: boolean = false) => {
     if (!formData.word || !formData.partOfSpeech || !formData.definition) {
       toast({
         title: 'Error',
         description: 'Please fill in all required fields.',
         variant: 'destructive',
       });
+      return;
+    }
+
+    // Check for duplicates if not forcing save
+    if (!forceSave && duplicateInfo?.isDuplicate) {
+      setShowDuplicateConfirm(true);
       return;
     }
 
@@ -110,6 +171,8 @@ export default function VocabularyCreateModal({
           videoUrl: '',
           tags: []
         });
+        setDuplicateInfo(null);
+        setShowDuplicateConfirm(false);
         onSave();
       } else {
         throw new Error('Failed to create vocabulary item');
@@ -124,6 +187,11 @@ export default function VocabularyCreateModal({
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleConfirmDuplicate = () => {
+    setShowDuplicateConfirm(false);
+    handleSave(true); // Force save despite duplicate
   };
 
   const handleClose = () => {
@@ -153,12 +221,52 @@ export default function VocabularyCreateModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="word">Word *</Label>
-                <Input
-                  id="word"
-                  value={formData.word}
-                  onChange={(e) => handleInputChange('word', e.target.value)}
-                  placeholder="Enter the word"
-                />
+                <div className="relative">
+                  <Input
+                    id="word"
+                    value={formData.word}
+                    onChange={(e) => handleInputChange('word', e.target.value)}
+                    placeholder="Enter the word"
+                    className={`pr-10 ${
+                      duplicateInfo?.isDuplicate 
+                        ? 'border-orange-300 focus:border-orange-500' 
+                        : duplicateInfo && !duplicateInfo.isDuplicate && formData.word
+                        ? 'border-green-300 focus:border-green-500'
+                        : ''
+                    }`}
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {checkingDuplicate ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    ) : duplicateInfo?.isDuplicate ? (
+                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    ) : duplicateInfo && !duplicateInfo.isDuplicate && formData.word ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : null}
+                  </div>
+                </div>
+                {duplicateInfo?.isDuplicate && (
+                  <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-medium text-orange-800">Word already exists</p>
+                        <p className="text-orange-700 mt-1">
+                          <strong>"{duplicateInfo.existingWord?.word}"</strong> ({duplicateInfo.existingWord?.partOfSpeech})
+                        </p>
+                        <p className="text-orange-600 mt-1 text-xs">
+                          {duplicateInfo.existingWord?.definition}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {duplicateInfo && !duplicateInfo.isDuplicate && formData.word && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Word is available</span>
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="phonetic">Phonetic Transcription</Label>
@@ -310,7 +418,7 @@ export default function VocabularyCreateModal({
               <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={saving}>
+              <Button onClick={() => handleSave()} disabled={saving}>
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

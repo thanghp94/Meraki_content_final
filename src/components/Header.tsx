@@ -55,7 +55,7 @@ export default function Header() {
                 className={`flex items-center gap-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-bold ${
                   isActive('/library') 
                     ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white border-2 border-white' 
-                    : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white'
+                    : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white hover:text-purple-700'
                 }`}
               >
                 <div className="text-lg">📚</div>
@@ -72,7 +72,7 @@ export default function Header() {
                     className={`flex items-center gap-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-bold ${
                       isActive('/vocabulary') 
                         ? 'bg-gradient-to-r from-orange-400 to-red-500 text-white border-2 border-white' 
-                        : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white'
+                        : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white hover:text-purple-700'
                     }`}
                   >
                     <div className="text-lg">📖</div>
@@ -86,7 +86,7 @@ export default function Header() {
                     className={`flex items-center gap-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-bold ${
                       isActive('/admin') 
                         ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-2 border-white' 
-                        : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white'
+                        : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white hover:text-purple-700'
                     }`}
                   >
                     <div className="text-lg">⚙️</div>

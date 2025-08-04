@@ -5,6 +5,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { GameProvider } from '@/contexts/GameContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { LibraryProvider } from '@/contexts/LibraryContext';
 import Header from '@/components/Header';
 
 const geistSans = Geist({
@@ -32,12 +33,14 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background`}>
         <AuthProvider>
           <GameProvider>
-            {/* Header might be conditional based on route in more complex apps */}
-            {/* <Header /> */} 
-            <main className="flex-grow"> {/* Removed container and padding to allow pages to control their own layout fully */}
-              {children}
-            </main>
-            <Toaster />
+            <LibraryProvider>
+              {/* Header might be conditional based on route in more complex apps */}
+              {/* <Header /> */} 
+              <main className="flex-grow"> {/* Removed container and padding to allow pages to control their own layout fully */}
+                {children}
+              </main>
+              <Toaster />
+            </LibraryProvider>
           </GameProvider>
         </AuthProvider>
       </body>

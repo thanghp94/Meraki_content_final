@@ -10,6 +10,7 @@ import { ChevronDown, ChevronRight, BookOpen, Image, Eye, Play, FileText } from 
 import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useLibrary } from '@/contexts/LibraryContext';
 
 interface Topic {
   id: string;
@@ -46,11 +47,17 @@ interface TopicsByUnitProps {
 
 export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsByUnitProps) {
   const router = useRouter();
-  const [unitGroups, setUnitGroups] = useState<UnitGroup[]>([]);
-  const [content, setContent] = useState<Content[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
-  const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
+  const {
+    libraryState,
+    setUnitGroups,
+    addContent,
+    setExpandedUnits,
+    setExpandedTopics,
+    markTopicAsLoaded,
+    isTopicLoaded,
+  } = useLibrary();
+  
+  const [isLoading, setIsLoading] = useState(false);
   const [isContentSelectionOpen, setIsContentSelectionOpen] = useState(false);
   const [selectedTopicForGame, setSelectedTopicForGame] = useState<Topic | null>(null);
   const [selectedContentIds, setSelectedContentIds] = useState<Set<string>>(new Set());
@@ -60,6 +67,10 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
   const [expandedTopicsInDialog, setExpandedTopicsInDialog] = useState<Set<string>>(new Set());
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
+  const [loadingTopics, setLoadingTopics] = useState<Set<string>>(new Set());
+
+  // Extract state from context
+  const { unitGroups, content, expandedUnits, expandedTopics } = libraryState;
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -72,25 +83,18 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
         
         console.log('Fetching initial placeholders for program:', programFilter, 'URL:', topicsUrl);
         
-        const [topicsResponse, contentResponse] = await Promise.all([
-          fetch(topicsUrl),
-          fetch('/api/admin/content')
-        ]);
+        // Only fetch topics initially, content will be loaded lazily when topics are expanded
+        const topicsResponse = await fetch(topicsUrl);
         
         if (!topicsResponse.ok) {
           throw new Error('Failed to fetch topics');
         }
-        if (!contentResponse.ok) {
-          throw new Error('Failed to fetch content');
-        }
         
         const topicsData = await topicsResponse.json();
-        const contentData = await contentResponse.json();
         
         console.log('Received initial placeholders for', programFilter, ':', topicsData);
         
         setUnitGroups(topicsData);
-        setContent(contentData);
       } catch (error) {
         console.error('Error fetching initial data:', error);
       } finally {
@@ -131,13 +135,12 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
           
           // Update the specific unit with its topics
           if (unitData.length > 0 && unitData[0].topics) {
-            setUnitGroups(prevGroups => 
-              prevGroups.map(group => 
-                group.unit === unit 
-                  ? { ...group, topics: unitData[0].topics }
-                  : group
-              )
+            const updatedGroups = unitGroups.map((group: UnitGroup) =>
+              group.unit === unit
+                ? { ...group, topics: unitData[0].topics }
+                : group
             );
+            setUnitGroups(updatedGroups);
           }
         } catch (error) {
           console.error('Error fetching topics for unit:', unit, error);
@@ -146,7 +149,7 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
     }
   };
 
-  const toggleTopic = (topicId: string) => {
+  const toggleTopic = async (topicId: string) => {
     // Only allow one topic to be expanded at a time
     if (expandedTopics.has(topicId)) {
       // If clicking the same topic, collapse it
@@ -154,6 +157,70 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
     } else {
       // If clicking a different topic, expand only that one
       setExpandedTopics(new Set([topicId]));
+      
+      // Check if content for this topic is already loaded
+      const hasContentForTopic = content.some(item => item.topicid === topicId) || isTopicLoaded(topicId);
+      
+      if (!hasContentForTopic) {
+        // Set loading state for this topic
+        setLoadingTopics(prev => new Set([...prev, topicId]));
+        
+        // Fetch content for this specific topic
+        try {
+          console.log('Fetching content for topic:', topicId);
+          const url = `/api/admin/content/paginated?topicIds=${topicId}&limit=50`;
+          console.log('Fetching from URL:', url);
+          
+          const contentResponse = await fetch(url);
+          
+          if (!contentResponse.ok) {
+            const errorText = await contentResponse.text();
+            console.error('API Error:', contentResponse.status, errorText);
+            throw new Error(`Failed to fetch topic content: ${contentResponse.status}`);
+          }
+          
+          const contentData = await contentResponse.json();
+          console.log('Received content for topic:', topicId, contentData);
+          
+          // Add the new content to existing content
+          if (contentData.content && contentData.content.length > 0) {
+            console.log('Adding', contentData.content.length, 'content items to state');
+            addContent(contentData.content);
+            markTopicAsLoaded(topicId);
+          } else {
+            console.log('No content returned for topic:', topicId);
+            markTopicAsLoaded(topicId); // Mark as loaded even if empty
+          }
+        } catch (error) {
+          console.error('Error fetching content for topic:', topicId, error);
+          
+          // Fallback: try to get content from the original API
+          try {
+            console.log('Trying fallback API for topic:', topicId);
+            const fallbackResponse = await fetch('/api/admin/content');
+            
+            if (fallbackResponse.ok) {
+              const fallbackData = await fallbackResponse.json();
+              const topicContent = fallbackData.filter((item: any) => item.topicid === topicId);
+              
+              if (topicContent.length > 0) {
+                console.log('Fallback: Adding', topicContent.length, 'content items');
+                addContent(topicContent);
+              }
+              markTopicAsLoaded(topicId);
+            }
+          } catch (fallbackError) {
+            console.error('Fallback API also failed:', fallbackError);
+          }
+        } finally {
+          // Remove loading state for this topic
+          setLoadingTopics(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(topicId);
+            return newSet;
+          });
+        }
+      }
     }
   };
 
@@ -377,7 +444,13 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
                     return (
                       <div key={`content-${topicId}`} className="bg-gradient-to-r from-pink-100 to-purple-100 border-4 border-pink-300 rounded-2xl p-6 shadow-lg">
                         
-                        {topicContent.length > 0 ? (
+                        {loadingTopics.has(topicId) ? (
+                          <div className="flex flex-col items-center justify-center py-8 bg-white rounded-2xl border-4 border-dashed border-blue-300">
+                            <Loader2 className="h-8 w-8 animate-spin mb-4 text-blue-600" />
+                            <p className="text-lg font-semibold text-blue-600">Loading activities...</p>
+                            <p className="text-sm text-blue-500">Please wait while we fetch the content!</p>
+                          </div>
+                        ) : topicContent.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {topicContent.map((content, index) => {
                               const cardColors = ['from-red-200 to-red-300', 'from-blue-200 to-blue-300', 'from-green-200 to-green-300', 'from-yellow-200 to-yellow-300', 'from-purple-200 to-purple-300', 'from-pink-200 to-pink-300'];

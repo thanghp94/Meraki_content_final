@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
 
 interface Topic {
   id: string;
@@ -45,22 +44,20 @@ export const UnitSelector: React.FC<UnitSelectorProps> = ({
           const topicsInUnit = topics.filter(t => t.unit === unit && t.program === 'Grapeseed');
           
           return (
-            <Button
+            <button
               key={unit}
-              variant={selectedUnit === unit ? "default" : "outline"}
-              size="sm"
               onClick={() => setSelectedUnit(unit)}
               className={`
-                w-6 h-6 rounded-full text-xs font-medium transition-all
+                w-6 h-6 rounded-full text-xs font-medium transition-all border cursor-pointer
                 ${selectedUnit === unit 
                   ? 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600' 
-                  : 'border-gray-300 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
+                  : 'border-gray-300 bg-white text-gray-800 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-900'
                 }
               `}
               title={`${unit} (${topicsInUnit.length} topics)`}
             >
               {unitNumber}
-            </Button>
+            </button>
           );
         })}
       </div>

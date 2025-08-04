@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Grid, List, Edit, Trash2, Image, Video, Tag, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Search, Plus, Filter, Grid, List, Edit, Trash2, Image, Video, Tag, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -27,64 +27,94 @@ interface VocabularyItem {
   updatedAt: string;
 }
 
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 function VocabularyPageContent() {
   const [vocabularyItems, setVocabularyItems] = useState<VocabularyItem[]>([]);
-  const [filteredItems, setFilteredItems] = useState<VocabularyItem[]>([]);
-  const [paginatedItems, setPaginatedItems] = useState<VocabularyItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedLetter, setSelectedLetter] = useState('All');
   const [selectedTag, setSelectedTag] = useState('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [editingItem, setEditingItem] = useState<VocabularyItem | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20); // 20 items per page
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    limit: 20,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
   const { toast } = useToast();
 
   // Alphabet letters for filtering
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-  // Calculate pagination values
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-
+  // Debounce search term
   useEffect(() => {
-    fetchVocabulary();
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset and fetch when filters change
+  useEffect(() => {
+    setVocabularyItems([]);
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    fetchVocabularyPaginated(1, true);
+  }, [debouncedSearchTerm, selectedLetter, selectedTag]);
+
+  // Initial load with faster startup
+  useEffect(() => {
+    // Start loading immediately without waiting for debounce
+    fetchVocabularyPaginated(1, true);
   }, []);
 
-  useEffect(() => {
-    filterItems();
-  }, [vocabularyItems, searchTerm, selectedLetter, selectedTag]);
-
-  useEffect(() => {
-    // Reset to first page when filters change
-    setCurrentPage(1);
-  }, [searchTerm, selectedLetter, selectedTag]);
-
-  useEffect(() => {
-    // Update paginated items when filtered items or current page changes
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    setPaginatedItems(filteredItems.slice(startIndex, endIndex));
-  }, [filteredItems, currentPage, itemsPerPage]);
-
-  const fetchVocabulary = async () => {
+  const fetchVocabularyPaginated = async (page: number = 1, reset: boolean = false) => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/vocabulary/all');
+      if (reset) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: page === 1 ? '10' : '20', // First load: 10 items, subsequent loads: 20 items
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+        ...(selectedLetter !== 'All' && { letter: selectedLetter }),
+        ...(selectedTag !== 'All' && { tag: selectedTag })
+      });
+
+      const response = await fetch(`/api/vocabulary/paginated?${params}`);
+      
       if (response.ok) {
         const data = await response.json();
-        setVocabularyItems(data.vocabularyItems || []);
         
-        // Extract all unique tags
-        const tags = new Set<string>();
-        data.vocabularyItems?.forEach((item: VocabularyItem) => {
-          item.tags?.forEach(tag => tags.add(tag));
-        });
-        setAllTags(Array.from(tags).sort());
+        if (reset) {
+          setVocabularyItems(data.vocabularyItems || []);
+        } else {
+          setVocabularyItems(prev => [...prev, ...(data.vocabularyItems || [])]);
+        }
+        
+        setPagination(data.pagination);
+        // Only update tags if they are provided (first page only)
+        if (data.allTags && data.allTags.length > 0) {
+          setAllTags(data.allTags);
+        }
       } else {
         throw new Error('Failed to fetch vocabulary');
       }
@@ -97,35 +127,14 @@ function VocabularyPageContent() {
       });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const filterItems = () => {
-    let filtered = vocabularyItems;
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(item =>
-        item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.definition.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const handleLoadMore = () => {
+    if (pagination.hasNextPage && !loadingMore) {
+      fetchVocabularyPaginated(pagination.currentPage + 1, false);
     }
-
-    // Filter by letter
-    if (selectedLetter !== 'All') {
-      filtered = filtered.filter(item =>
-        item.word.charAt(0).toUpperCase() === selectedLetter
-      );
-    }
-
-    // Filter by tag
-    if (selectedTag !== 'All') {
-      filtered = filtered.filter(item =>
-        item.tags?.includes(selectedTag)
-      );
-    }
-
-    setFilteredItems(filtered);
   };
 
   const handleEdit = (item: VocabularyItem) => {
@@ -147,7 +156,10 @@ function VocabularyPageContent() {
           title: 'Success',
           description: 'Vocabulary item deleted successfully.',
         });
-        fetchVocabulary();
+        // Refresh the current view
+        setVocabularyItems([]);
+        setPagination(prev => ({ ...prev, currentPage: 1 }));
+        fetchVocabularyPaginated(1, true);
       } else {
         throw new Error('Failed to delete vocabulary item');
       }
@@ -164,7 +176,10 @@ function VocabularyPageContent() {
   const handleSave = () => {
     setEditingItem(null);
     setShowCreateModal(false);
-    fetchVocabulary();
+    // Refresh the current view
+    setVocabularyItems([]);
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    fetchVocabularyPaginated(1, true);
   };
 
   const VocabularyCard = ({ item }: { item: VocabularyItem }) => (
@@ -406,7 +421,7 @@ function VocabularyPageContent() {
                         className={`h-8 w-8 p-0 text-xs font-bold rounded-full transition-all duration-300 ${
                           selectedLetter === letter 
                             ? `bg-gradient-to-r ${colors[colorIndex]} text-white shadow-lg` 
-                            : 'bg-white border-2 border-gray-300 text-gray-600 hover:bg-gray-50'
+                            : 'bg-white border-2 border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                         }`}
                         onClick={() => setSelectedLetter(letter)}
                       >
@@ -415,7 +430,7 @@ function VocabularyPageContent() {
                     );
                   })}
                   <div className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
-                    {filteredItems.length}/{vocabularyItems.length} words
+                    {pagination.totalCount} words
                   </div>
                 </div>
               </div>
@@ -456,7 +471,7 @@ function VocabularyPageContent() {
                         className={`h-8 px-2 text-xs font-bold rounded-full transition-all duration-300 ${
                           selectedTag === tag 
                             ? `bg-gradient-to-r ${tagColors[colorIndex]} text-white shadow-lg` 
-                            : 'bg-white border-2 border-gray-300 text-gray-600 hover:bg-gray-50'
+                            : 'bg-white border-2 border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                         }`}
                       >
                         {tag}
@@ -464,7 +479,7 @@ function VocabularyPageContent() {
                     );
                   })}
                   <div className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
-                    {filteredItems.length}/{vocabularyItems.length} words
+                    {pagination.totalCount} words
                   </div>
                 </div>
               </div>
@@ -473,7 +488,7 @@ function VocabularyPageContent() {
         </div>
 
         {/* Vocabulary Items */}
-        {filteredItems.length === 0 ? (
+        {vocabularyItems.length === 0 && !loading ? (
           <div className="text-center py-12 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl border-4 border-dashed border-purple-300">
             <div className="text-8xl mb-4 animate-bounce">🔍</div>
             <h3 className="text-2xl font-bold text-purple-700 mb-4">Oops! No words found!</h3>
@@ -485,86 +500,49 @@ function VocabularyPageContent() {
           <>
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-                {paginatedItems.map(item => (
+                {vocabularyItems.map((item: VocabularyItem) => (
                   <VocabularyCard key={item.id} item={item} />
                 ))}
               </div>
             ) : (
               <div className="space-y-4 mb-8">
-                {paginatedItems.map(item => (
+                {vocabularyItems.map((item: VocabularyItem) => (
                   <VocabularyListItem key={item.id} item={item} />
                 ))}
               </div>
             )}
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-8 mb-4">
+            {/* Load More Button */}
+            {pagination.hasNextPage && (
+              <div className="flex justify-center mt-8 mb-4">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="bg-gradient-to-r from-purple-400 to-pink-400 text-white border-0 rounded-full font-bold hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-full px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  ⬅️ Previous
-                </Button>
-
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                    let pageNumber;
-                    if (totalPages <= 7) {
-                      pageNumber = i + 1;
-                    } else if (currentPage <= 4) {
-                      pageNumber = i + 1;
-                    } else if (currentPage >= totalPages - 3) {
-                      pageNumber = totalPages - 6 + i;
-                    } else {
-                      pageNumber = currentPage - 3 + i;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNumber}
-                        variant={currentPage === pageNumber ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNumber)}
-                        className={`w-10 h-8 rounded-full font-bold transition-all duration-300 ${
-                          currentPage === pageNumber
-                            ? 'bg-gradient-to-r from-orange-400 to-red-400 text-white shadow-lg scale-110'
-                            : 'bg-white border-2 border-purple-300 text-purple-600 hover:bg-purple-50 hover:scale-105'
-                        }`}
-                      >
-                        {pageNumber}
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="bg-gradient-to-r from-green-400 to-blue-400 text-white border-0 rounded-full font-bold hover:from-green-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next ➡️
-                  <ChevronRight className="h-4 w-4 ml-1" />
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Loading more words...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-5 w-5 mr-2" />
+                      Load More Words ({pagination.totalCount - vocabularyItems.length} remaining)
+                    </>
+                  )}
                 </Button>
               </div>
             )}
 
-            {/* Page Info */}
-            {totalPages > 1 && (
-              <div className="text-center mt-4">
-                <div className="inline-block bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-full">
-                  <p className="text-sm font-semibold text-purple-700">
-                    📄 Page {currentPage} of {totalPages} • Showing {startIndex + 1}-{Math.min(endIndex, filteredItems.length)} of {filteredItems.length} words
-                  </p>
-                </div>
+            {/* Results Info */}
+            <div className="text-center mt-4">
+              <div className="inline-block bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-full">
+                <p className="text-sm font-semibold text-purple-700">
+                  📚 Showing {vocabularyItems.length} of {pagination.totalCount} words
+                </p>
               </div>
-            )}
+            </div>
           </>
         )}
 

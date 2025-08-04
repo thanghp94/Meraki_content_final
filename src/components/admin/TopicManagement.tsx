@@ -285,7 +285,7 @@ export default function TopicManagement() {
   }
 
   return (
-    <div className="container mx-auto p-3">
+    <div className="container mx-auto p-3 mt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-3xl font-bold">Topic Management</h1>
