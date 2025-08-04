@@ -1,4 +1,5 @@
 import React from 'react';
+import { BookOpen, Users } from 'lucide-react';
 
 interface Topic {
   id: string;
@@ -37,26 +38,55 @@ export const UnitSelector: React.FC<UnitSelectorProps> = ({
   ));
 
   return (
-    <div className="mb-6">
-      <div className="flex flex-wrap gap-1">
-        {availableUnits.map((unit) => {
+    <div className="mb-4">
+      <div className="flex flex-wrap gap-2">
+        {availableUnits.map((unit, index) => {
           const unitNumber = unit.replace('Unit ', '');
           const topicsInUnit = topics.filter(t => t.unit === unit && t.program === 'Grapeseed');
+          
+          // Create different gradient colors for each unit
+          const gradientColors = [
+            'from-red-400 to-pink-400',
+            'from-blue-400 to-purple-400', 
+            'from-green-400 to-teal-400',
+            'from-yellow-400 to-orange-400',
+            'from-purple-400 to-indigo-400',
+            'from-pink-400 to-rose-400',
+            'from-cyan-400 to-blue-400',
+            'from-emerald-400 to-green-400'
+          ];
+          const colorIndex = index % gradientColors.length;
           
           return (
             <button
               key={unit}
               onClick={() => setSelectedUnit(unit)}
               className={`
-                w-6 h-6 rounded-full text-xs font-medium transition-all border cursor-pointer
+                relative group min-w-[50px] h-8 rounded-lg text-xs font-bold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg border
                 ${selectedUnit === unit 
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600' 
-                  : 'border-gray-300 bg-white text-gray-800 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-900'
+                  ? `bg-gradient-to-r ${gradientColors[colorIndex]} text-white border-white shadow-lg scale-105` 
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
                 }
               `}
               title={`${unit} (${topicsInUnit.length} topics)`}
             >
-              {unitNumber}
+              <div className="flex items-center justify-center h-full px-2">
+                <span className="text-sm font-black">{unitNumber}</span>
+              </div>
+              
+              {/* Topic count badge */}
+              <div className={`
+                absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs font-bold flex items-center justify-center
+                ${selectedUnit === unit 
+                  ? 'bg-white text-purple-600' 
+                  : 'bg-purple-500 text-white'
+                }
+              `}>
+                {topicsInUnit.length}
+              </div>
+              
+              {/* Hover effect overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
             </button>
           );
         })}

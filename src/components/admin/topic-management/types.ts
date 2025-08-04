@@ -7,6 +7,7 @@ export interface Topic {
   visible?: boolean;
   order?: number;
   image?: string;
+  parentid?: string | null;
   showstudent?: boolean;
   order_index?: number;
 }

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Search } from 'lucide-react';
+import { Loader2, Plus, Search, Settings, BookOpen, Users, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   UnitSelector, 
@@ -29,6 +29,16 @@ import AdminQuestionDialog from './AdminQuestionDialog';
 import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import { ContentQuestionsModal } from './topic-management/components/questions/ContentQuestionsModal';
 import { ManualQuestionModal } from './ManualQuestionModal';
+
+interface TopicFormData {
+  topic: string;
+  short_summary: string;
+  unit: string;
+  image: string;
+  parentid: string | null;
+  showstudent: boolean;
+  program: string;
+}
 
 export default function TopicManagement() {
   const { toast } = useToast();
@@ -79,11 +89,12 @@ export default function TopicManagement() {
   const [selectedTopicForView, setSelectedTopicForView] = useState<string>('');
 
   // Form data states
-  const [topicFormData, setTopicFormData] = useState({
+  const [topicFormData, setTopicFormData] = useState<TopicFormData>({
     topic: '',
     short_summary: '',
     unit: '',
     image: '',
+    parentid: null,
     showstudent: true,
     program: ''
   });
@@ -172,6 +183,7 @@ export default function TopicManagement() {
       short_summary: '',
       unit: '',
       image: '',
+      parentid: null,
       showstudent: true,
       program: ''
     });
@@ -209,6 +221,7 @@ export default function TopicManagement() {
       short_summary: topic.short_summary || '',
       unit: topic.unit || '',
       image: topic.image || '',
+      parentid: topic.parentid || null,
       showstudent: topic.showstudent || true,
       program: topic.program || ''
     });
@@ -278,54 +291,65 @@ export default function TopicManagement() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex flex-col items-center justify-center h-64 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border-4 border-purple-200">
+        <Loader2 className="h-12 w-12 animate-spin text-purple-600 mb-4" />
+        <p className="text-lg font-semibold text-purple-700">Loading amazing content...</p>
+        <p className="text-sm text-purple-500">Please wait while we fetch your topics</p>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-3 mt-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-3xl font-bold">Topic Management</h1>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="program-select">Program:</Label>
-            <Select value={selectedProgram} onValueChange={setSelectedProgram}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select program" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Grapeseed">Grapeseed</SelectItem>
-                <SelectItem value="TATH">TATH</SelectItem>
-                <SelectItem value="WSC">WSC</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Enhanced Header with Gradient Background - Reduced Padding */}
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-2xl shadow-xl py-2 px-4 mb-6 border-4 border-white/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white drop-shadow-lg">📚 Content</h1>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search topics..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-            />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg p-2">
+              <Label htmlFor="program-select" className="text-white font-medium">📚 Program:</Label>
+              <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+                <SelectTrigger className="w-48 bg-white/20 border-white/30 text-white backdrop-blur-sm">
+                  <SelectValue placeholder="Select program" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Grapeseed">🍇 Grapeseed</SelectItem>
+                  <SelectItem value="TATH">🎯 TATH</SelectItem>
+                  <SelectItem value="WSC">🌟 WSC</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
+              <Input
+                placeholder="🔍 Search topics..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-64 bg-white/20 border-white/30 text-white placeholder:text-white/70 backdrop-blur-sm"
+              />
+            </div>
+            <Button 
+              onClick={() => setIsTopicDialogOpen(true)}
+              className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              ✨ Add Topic
+            </Button>
           </div>
-          <Button onClick={() => setIsTopicDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Topic
-          </Button>
         </div>
       </div>
 
-      {/* Unit Selector */}
-      <UnitSelector
-        topics={topics}
-        selectedProgram={selectedProgram}
-        selectedUnit={selectedUnit}
-        setSelectedUnit={setSelectedUnit}
-      />
+      {/* Enhanced Unit Selector */}
+      <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl shadow-lg p-4 mb-6 border-4 border-yellow-300">
+        <UnitSelector
+          topics={topics}
+          selectedProgram={selectedProgram}
+          selectedUnit={selectedUnit}
+          setSelectedUnit={setSelectedUnit}
+        />
+      </div>
 
       {/* Topics Display */}
       {selectedUnit ? (
@@ -363,14 +387,12 @@ export default function TopicManagement() {
           )}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Unit to View Topics</h3>
-          <p className="text-gray-500">Choose a unit from the selector above to see all topics and content for that unit.</p>
+        <div className="text-center py-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl border-4 border-dashed border-purple-300">
+          <div className="text-8xl mb-4 animate-bounce">📚</div>
+          <h3 className="text-2xl font-bold text-purple-700 mb-4">Select a Unit to View Topics</h3>
+          <p className="text-lg text-purple-600 bg-white/70 px-6 py-2 rounded-full inline-block">
+            🌟 Choose a unit from the selector above to see all topics and content! 🌟
+          </p>
         </div>
       )}
 
