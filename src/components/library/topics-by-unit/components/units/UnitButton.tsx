@@ -51,7 +51,7 @@ export const UnitButton: React.FC<UnitButtonProps> = ({
     <div
       className={`relative flex items-center justify-center py-2 px-1 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
         isSelected 
-          ? `${selectedColors[colorIndex]} text-white shadow-lg border-2 border-white` 
+          ? `${selectedColors[colorIndex]} text-white shadow-lg border-4 border-orange-400 ring-4 ring-orange-300` 
           : `${colors[colorIndex]} text-gray-800 hover:shadow-md border-2 border-transparent`
       }`}
       onClick={() => onUnitClick(unitGroup.unit)}

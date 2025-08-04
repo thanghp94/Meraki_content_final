@@ -54,10 +54,10 @@ export const TopicButton: React.FC<TopicButtonProps> = ({
     <div className="relative">
       {/* Smaller Lesson Button with reduced padding */}
       <button
-        className={`flex items-center justify-center w-10 h-10 rounded-full border-2 border-white transition-all duration-300 cursor-pointer text-xs font-bold relative transform hover:scale-105 shadow-md ${
+        className={`flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer text-xs font-bold relative transform hover:scale-105 shadow-md ${
           isExpanded 
-            ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg scale-105' 
-            : `${buttonColors[colorIndex]} ${hoverColors[colorIndex]} text-white`
+            ? 'w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-xl scale-125 border-4 border-yellow-400 ring-4 ring-yellow-300' 
+            : `w-10 h-10 border-2 border-white ${buttonColors[colorIndex]} ${hoverColors[colorIndex]} text-white`
         }`}
         onClick={() => onTopicClick(topic.id)}
         title={topic.topic || 'Untitled Topic'}
