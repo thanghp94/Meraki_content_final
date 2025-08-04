@@ -52,9 +52,9 @@ export const TopicButton: React.FC<TopicButtonProps> = ({
   
   return (
     <div className="relative">
-      {/* Smaller Lesson Button */}
+      {/* Smaller Lesson Button with reduced padding */}
       <button
-        className={`flex items-center justify-center w-12 h-12 rounded-full border-2 border-white transition-all duration-300 cursor-pointer text-xs font-bold relative transform hover:scale-105 shadow-md ${
+        className={`flex items-center justify-center w-10 h-10 rounded-full border-2 border-white transition-all duration-300 cursor-pointer text-xs font-bold relative transform hover:scale-105 shadow-md ${
           isExpanded 
             ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg scale-105' 
             : `${buttonColors[colorIndex]} ${hoverColors[colorIndex]} text-white`
@@ -63,33 +63,36 @@ export const TopicButton: React.FC<TopicButtonProps> = ({
         title={topic.topic || 'Untitled Topic'}
       >
         L{lessonNumber}
-        
-        {/* Smaller Play Button */}
+      </button>
+
+      {/* Stacked Action Buttons Container */}
+      <div className="absolute -top-0.5 -right-0.5 flex flex-col gap-0.5">
+        {/* Play Button */}
         <div
-          className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-md"
+          className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm"
           onClick={(e) => {
             e.stopPropagation();
             onPlayClick(topic, topicContent);
           }}
           title="🎮 Start Game!"
         >
-          <Play className="h-3 w-3 text-white" />
+          <Play className="h-2 w-2 text-white" />
         </div>
 
         {/* Review Button */}
         {onReviewClick && (
           <div
-            className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-400 hover:from-blue-500 hover:to-purple-500 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-md"
+            className="w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 hover:from-blue-500 hover:to-purple-500 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm"
             onClick={(e) => {
               e.stopPropagation();
               onReviewClick(topic, topicContent);
             }}
             title="📚 Review Vocabulary & Questions!"
           >
-            <BookOpen className="h-3 w-3 text-white" />
+            <BookOpen className="h-2 w-2 text-white" />
           </div>
         )}
-      </button>
+      </div>
     </div>
   );
 };

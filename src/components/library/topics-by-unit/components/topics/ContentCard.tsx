@@ -51,36 +51,36 @@ export const ContentCard: React.FC<ContentCardProps> = ({
       <CardContent className="p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-grow min-w-0">
-            <div className="flex items-center justify-center w-8 h-8 text-sm font-bold border-2 border-white rounded-full bg-white text-gray-700 shadow-md flex-shrink-0">
+            <div className="flex items-center justify-center w-6 h-6 text-xs font-bold border-2 border-white rounded-full bg-white text-gray-700 shadow-md flex-shrink-0">
               {index + 1}
             </div>
             <h5 className="font-bold text-sm text-gray-800 leading-tight">{content.title}</h5>
           </div>
-          <div className="flex gap-1 flex-shrink-0">
+          <div className="flex flex-col gap-0.5 flex-shrink-0">
             {hasVocabulary && onReviewClick && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-10 w-10 p-0 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-md transition-all duration-300"
+                className="h-6 w-6 p-0 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-sm transition-all duration-300"
                 onClick={(e) => {
                   e.stopPropagation();
                   onReviewClick(content);
                 }}
                 title="Review vocabulary"
               >
-                <BookOpen className="h-4 w-4" />
+                <BookOpen className="h-3 w-3" />
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
-              className="h-10 w-10 p-0 bg-white hover:bg-yellow-100 text-purple-600 hover:text-purple-700 rounded-full shadow-md transition-all duration-300"
+              className="h-6 w-6 p-0 bg-white hover:bg-yellow-100 text-purple-600 hover:text-purple-700 rounded-full shadow-sm transition-all duration-300"
               onClick={(e) => {
                 e.stopPropagation();
                 onPlayClick(content);
               }}
             >
-              <Play className="h-4 w-4" />
+              <Play className="h-3 w-3" />
             </Button>
           </div>
         </div>
