@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Search, Save, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { X, Plus, Search, Save, Loader2, AlertTriangle, CheckCircle, Sparkles, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ImageSearchModal } from '@/components/admin/ImageSearchModal';
 
@@ -41,6 +41,7 @@ export default function VocabularyCreateModal({
   const [saving, setSaving] = useState(false);
   const [showImageSearch, setShowImageSearch] = useState(false);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<{
     isDuplicate: boolean;
     existingWord?: {
@@ -129,6 +130,78 @@ export default function VocabularyCreateModal({
     setShowImageSearch(false);
   };
 
+  const handleAIGenerate = async () => {
+    if (!formData.word.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a word first before using AI generation.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check if word already exists
+    if (duplicateInfo?.isDuplicate) {
+      toast({
+        title: 'Word Already Exists',
+        description: 'This word already exists in the vocabulary. Please try a different word.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setGeneratingAI(true);
+      toast({
+        title: 'AI Generating...',
+        description: 'Please wait while AI generates vocabulary data for your word.',
+      });
+
+      const response = await fetch('/api/vocabulary/ai-generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ word: formData.word.trim() }),
+      });
+
+      if (response.ok) {
+        const aiData = await response.json();
+        
+        // Update form with AI-generated data, but keep the original word
+        setFormData(prev => ({
+          ...prev,
+          partOfSpeech: aiData.partOfSpeech || prev.partOfSpeech,
+          definition: aiData.definition || prev.definition,
+          exampleSentence: aiData.exampleSentence || prev.exampleSentence,
+          phoneticTranscription: aiData.phoneticTranscription || prev.phoneticTranscription,
+          tags: [...new Set([...prev.tags, ...aiData.tags])] // Merge tags without duplicates
+        }));
+
+        toast({
+          title: 'AI Generation Complete!',
+          description: 'Vocabulary data has been generated. Please review and edit as needed.',
+        });
+
+        // Auto-search for images if word is available
+        if (formData.word && !formData.imageUrl) {
+          setShowImageSearch(true);
+        }
+      } else {
+        throw new Error('Failed to generate vocabulary data');
+      }
+    } catch (error) {
+      console.error('Error generating AI vocabulary:', error);
+      toast({
+        title: 'AI Generation Failed',
+        description: 'Failed to generate vocabulary data. Please fill in the fields manually.',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
   const handleSave = async (forceSave: boolean = false) => {
     if (!formData.word || !formData.partOfSpeech || !formData.definition) {
       toast({
@@ -213,11 +286,14 @@ export default function VocabularyCreateModal({
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add New Vocabulary Word</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Wand2 className="h-5 w-5 text-purple-600" />
+              Add New Vocabulary Word
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Word and Phonetic */}
+            {/* Word and AI Generate Button */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="word">Word *</Label>
@@ -268,15 +344,40 @@ export default function VocabularyCreateModal({
                   </div>
                 )}
               </div>
-              <div>
-                <Label htmlFor="phonetic">Phonetic Transcription</Label>
-                <Input
-                  id="phonetic"
-                  value={formData.phoneticTranscription}
-                  onChange={(e) => handleInputChange('phoneticTranscription', e.target.value)}
-                  placeholder="e.g., /həˈloʊ/"
-                />
+              <div className="flex flex-col justify-end">
+                <Button
+                  type="button"
+                  onClick={handleAIGenerate}
+                  disabled={!formData.word.trim() || generatingAI || duplicateInfo?.isDuplicate}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold shadow-lg transition-all duration-200 hover:scale-105"
+                >
+                  {generatingAI ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      AI Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      ✨ AI Generate
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-gray-500 mt-1 text-center">
+                  Let AI fill all fields for you!
+                </p>
               </div>
+            </div>
+
+            {/* Phonetic Transcription */}
+            <div>
+              <Label htmlFor="phonetic">Phonetic Transcription</Label>
+              <Input
+                id="phonetic"
+                value={formData.phoneticTranscription}
+                onChange={(e) => handleInputChange('phoneticTranscription', e.target.value)}
+                placeholder="e.g., /həˈloʊ/"
+              />
             </div>
 
             {/* Part of Speech */}
