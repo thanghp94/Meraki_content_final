@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Settings, Library as LibraryIcon, Eye, LogOut, User } from 'lucide-react';
+import { Settings, Library as LibraryIcon, Eye, LogOut, User, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,48 +37,80 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b" style={{ borderColor: 'var(--colors-border)', boxShadow: 'var(--shadow-sm)' }}>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 border-b-4 border-yellow-300 shadow-xl">
       <div className="max-w-screen-xl mx-auto px-6">
-        <div className="flex items-center justify-between" style={{ padding: 'var(--spacing-4) 0' }}>
-          <Link href="/" className="flex items-center gap-2 text-foreground hover:opacity-80" style={{ fontWeight: 'var(--font-bold)', transition: 'var(--transition-normal)' }}>
-            <span className="text-xl">Meraki Learning</span>
+        <div className="flex items-center justify-between py-1">
+          <Link href="/" className="flex items-center gap-2 text-white hover:scale-105 transition-transform duration-300">
+            <div className="text-base animate-bounce">🌟</div>
+            <span className="text-base font-bold bg-gradient-to-r from-yellow-200 to-orange-200 bg-clip-text text-transparent">
+              Meraki Learning
+            </span>
           </Link>
           
-          <nav className="flex items-center space-x-4">
+          <nav className="flex items-center space-x-3">
             <Link href="/library">
               <Button
                 variant={isActive('/library') ? 'default' : 'outline'}
                 size="lg"
-                className="flex items-center gap-2 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                className={`flex items-center gap-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-bold ${
+                  isActive('/library') 
+                    ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white border-2 border-white' 
+                    : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white'
+                }`}
               >
-                <LibraryIcon className="h-5 w-5" />
+                <div className="text-lg">📚</div>
                 Library
               </Button>
             </Link>
-            {/* Content Demo button removed as requested */}
+            
             {hasAnyRole(['admin', 'teacher']) && (
-              <Link href="/admin">
-                <Button
-                  variant={isActive('/admin') ? 'default' : 'outline'}
-                  size="lg"
-                  className="flex items-center gap-2 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <Settings className="h-5 w-5" />
-                  Admin
-                </Button>
-              </Link>
+              <>
+                <Link href="/vocabulary">
+                  <Button
+                    variant={isActive('/vocabulary') ? 'default' : 'outline'}
+                    size="lg"
+                    className={`flex items-center gap-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-bold ${
+                      isActive('/vocabulary') 
+                        ? 'bg-gradient-to-r from-orange-400 to-red-500 text-white border-2 border-white' 
+                        : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white'
+                    }`}
+                  >
+                    <div className="text-lg">📖</div>
+                    Vocabulary
+                  </Button>
+                </Link>
+                <Link href="/admin">
+                  <Button
+                    variant={isActive('/admin') ? 'default' : 'outline'}
+                    size="lg"
+                    className={`flex items-center gap-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-bold ${
+                      isActive('/admin') 
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-2 border-white' 
+                        : 'bg-white/90 text-purple-700 border-2 border-purple-300 hover:bg-white'
+                    }`}
+                  >
+                    <div className="text-lg">⚙️</div>
+                    Admin
+                  </Button>
+                </Link>
+              </>
             )}
             
             {user && (
-              <div className="flex items-center gap-2 ml-4 pl-4 border-l">
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  <span className="text-sm font-medium">{user.name}</span>
-                  <Badge className={getRoleBadgeColor()}>
+              <div className="flex items-center gap-3 ml-4 pl-4 border-l-2 border-white/30">
+                <div className="flex items-center gap-2 bg-white/20 rounded-full px-4 py-2 backdrop-blur-sm">
+                  <div className="text-lg">👤</div>
+                  <span className="text-sm font-bold text-white">{user.name}</span>
+                  <Badge className={`${getRoleBadgeColor()} font-bold text-xs rounded-full px-2 py-1`}>
                     {user.role}
                   </Badge>
                 </div>
-                <Button onClick={handleLogout} variant="outline" size="sm">
+                <Button 
+                  onClick={handleLogout} 
+                  variant="outline" 
+                  size="sm"
+                  className="bg-white/20 text-white border-2 border-white/50 hover:bg-white/30 rounded-full font-bold transition-all duration-300 transform hover:scale-105"
+                >
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>

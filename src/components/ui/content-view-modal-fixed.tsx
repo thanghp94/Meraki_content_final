@@ -180,48 +180,50 @@ export default function ContentViewModal({
           <DialogTitle className="sr-only">Content Viewer</DialogTitle>
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-blue-600 text-white">
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 text-white">
+              <div className="flex items-center gap-6">
                 {showNavigation && onNavigate && (
                   <>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="text-white hover:bg-blue-700"
+                      size="lg"
+                      className="text-white hover:bg-white/20 border-2 border-white/30 hover:border-white/50 rounded-full px-6 py-3 font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                       onClick={() => onNavigate('prev')}
                     >
-                      <ChevronLeft className="h-4 w-4" />
+                      <ChevronLeft className="h-6 w-6 mr-2" />
+                      Back
                     </Button>
-                    <span className="text-sm">1/1</span>
+                    <span className="text-lg font-bold bg-white/20 px-4 py-2 rounded-full border border-white/30">1/1</span>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="text-white hover:bg-blue-700"
+                      size="lg"
+                      className="text-white hover:bg-white/20 border-2 border-white/30 hover:border-white/50 rounded-full px-6 py-3 font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                       onClick={() => onNavigate('next')}
                     >
-                      <ChevronRight className="h-4 w-4" />
+                      Next
+                      <ChevronRight className="h-6 w-6 ml-2" />
                     </Button>
                   </>
                 )}
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  className="bg-white text-blue-600 hover:bg-gray-100"
+                  size="lg" 
+                  className="bg-yellow-400 text-purple-800 hover:bg-yellow-300 border-2 border-yellow-300 font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   onClick={() => setShowQuiz(true)}
                   disabled={!content?.questions || content.questions.length === 0}
                 >
-                  Quiz ({content?.questions?.length || 0})
+                  🎯 Quiz ({content?.questions?.length || 0})
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white hover:bg-blue-700"
+                  className="text-white hover:bg-white/20 rounded-full p-3"
                   onClick={onClose}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-6 w-6" />
                 </Button>
               </div>
             </div>
@@ -236,60 +238,54 @@ export default function ContentViewModal({
                 <div className="flex h-full">
                   {/* Left Content Panel */}
                   <div className="flex-1 p-6 overflow-y-auto max-h-full">
-                    {/* Title with TTS */}
-                    <div className="flex items-start gap-3 mb-6">
-                      <h1 className="text-2xl font-bold text-blue-600 flex-1">
+                    {/* Title with TTS - Smaller but still prominent */}
+                    <div className="flex items-start gap-4 mb-8 p-6 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 rounded-2xl border-4 border-purple-200 shadow-lg">
+                      <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 flex-1 leading-tight">
                         {content.title}
                       </h1>
                       <TextToSpeechButton
                         text={formatContentForTTS(content)}
                         variant="outline"
-                        size="sm"
+                        size="lg"
                         iconOnly={true}
-                        className="mt-1"
+                        className="mt-2 bg-yellow-400 hover:bg-yellow-300 border-2 border-yellow-500 rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110"
                       />
                     </div>
 
-                    {/* Content Sections with Markdown Support */}
-                    <div className="space-y-6">
+                    {/* Content Sections with Enhanced Vocabulary Display */}
+                    <div className="space-y-8">
                       {content.infor1 && (
-                        <div className="space-y-2">
-                          <div className="flex items-start gap-2">
-                            <div className="flex-1">
-                              <MarkdownRenderer 
-                                content={content.infor1} 
-                                className="text-gray-700"
-                              />
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 mt-1"
-                                onClick={() => {
-                                  // Trigger text-to-speech for this section
-                                  const utterance = new SpeechSynthesisUtterance(content.infor1);
-                                  speechSynthesis.speak(utterance);
-                                }}
-                              >
-                                <Play className="h-3 w-3" />
-                              </Button>
-                              <TextToSpeechButton
-                                text={content.infor1}
-                                variant="ghost"
-                                size="sm"
-                                iconOnly={true}
-                                className="h-6 w-6 mt-1"
-                              />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 mt-1"
-                                onClick={handleOpenFlashcards}
-                                title="Open vocabulary flashcards"
-                              >
-                                <BookOpen className="h-3 w-3" />
-                              </Button>
+                        <div className="space-y-4">
+                          {/* Enhanced Vocabulary Words Display */}
+                          <div className="p-6 bg-gradient-to-r from-yellow-100 via-orange-100 to-red-100 rounded-2xl border-4 border-orange-200 shadow-lg">
+                            <div className="flex items-start gap-4">
+                              <div className="flex-1">
+                                <div className="leading-relaxed">
+                                  {content.infor1.split(',').map((word, index) => (
+                                    <span key={index} className="inline-block mr-4 mb-2 px-6 py-3 bg-white rounded-full border-4 border-orange-400 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-2xl font-black text-gray-800">
+                                      {word.trim()}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <TextToSpeechButton
+                                  text={content.infor1}
+                                  variant="outline"
+                                  size="lg"
+                                  iconOnly={true}
+                                  className="bg-blue-400 hover:bg-blue-300 border-2 border-blue-500 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="lg"
+                                  className="bg-purple-400 hover:bg-purple-300 text-white border-2 border-purple-500 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110"
+                                  onClick={handleOpenFlashcards}
+                                  title="Open vocabulary flashcards"
+                                >
+                                  <BookOpen className="h-6 w-6" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -330,20 +326,6 @@ export default function ContentViewModal({
                       )}
                     </div>
 
-                    {/* Additional Information Collapsible */}
-                    <div className="mt-8 border-t pt-6">
-                      <details className="group">
-                        <summary className="flex items-center justify-between cursor-pointer text-lg font-semibold text-gray-800 hover:text-blue-600">
-                          <span>Additional Information</span>
-                          <ChevronRight className="h-5 w-5 transition-transform group-open:rotate-90" />
-                        </summary>
-                        <div className="mt-4 space-y-3 text-gray-700">
-                          <p>Click on the images and videos in the gallery to view them in full size.</p>
-                          <p>Use the speaker icons to hear any section read aloud.</p>
-                          <p>Navigate between content using the arrow buttons in the header.</p>
-                        </div>
-                      </details>
-                    </div>
                   </div>
 
                   {/* Right Media Gallery */}

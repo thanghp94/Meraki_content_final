@@ -41,9 +41,10 @@ interface UnitGroup {
 
 interface TopicsByUnitProps {
   programFilter?: string;
+  onProgramChange?: (program: 'Grapeseed' | 'TATH') => void;
 }
 
-export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
+export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsByUnitProps) {
   const router = useRouter();
   const [unitGroups, setUnitGroups] = useState<UnitGroup[]>([]);
   const [content, setContent] = useState<Content[]>([]);
@@ -215,36 +216,66 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
 
 
   return (
-    <div className="box-border flex relative w-full max-w-[1440px] min-h-[600px] bg-white border-2 border-gray-300 rounded-lg mx-auto">
+    <div className="box-border flex relative w-full max-w-[1440px] min-h-[600px] bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 border-4 border-rainbow rounded-2xl mx-auto mt-0 shadow-xl overflow-hidden">
       {/* Sidebar for units */}
-      <div className="w-48 border-r border-gray-200 bg-gray-50">
+      <div className="w-48 border-r-4 border-yellow-300 bg-gradient-to-b from-yellow-100 to-orange-100">
         <div className="p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Units</h3>
-          <div className={programFilter === 'Grapeseed' ? 'grid grid-cols-2 gap-1' : 'space-y-1'}>
-            {unitGroups.map((unitGroup) => {
+          {/* Program Switcher */}
+          <div className="flex gap-1 mb-4">
+            <Button
+              variant={programFilter === 'Grapeseed' ? 'default' : 'outline'}
+              onClick={() => onProgramChange?.('Grapeseed')}
+              className={`flex-1 text-xs font-bold rounded-full transition-all duration-300 ${
+                programFilter === 'Grapeseed' 
+                  ? 'bg-gradient-to-r from-green-400 to-green-600 text-white shadow-lg transform scale-105' 
+                  : 'bg-white border-2 border-green-300 text-green-600 hover:bg-green-50'
+              }`}
+              size="sm"
+            >
+              🍇 GS
+            </Button>
+            <Button
+              variant={programFilter === 'TATH' ? 'default' : 'outline'}
+              onClick={() => onProgramChange?.('TATH')}
+              className={`flex-1 text-xs font-bold rounded-full transition-all duration-300 ${
+                programFilter === 'TATH' 
+                  ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-lg transform scale-105' 
+                  : 'bg-white border-2 border-blue-300 text-blue-600 hover:bg-blue-50'
+              }`}
+              size="sm"
+            >
+              🎯 TATH
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-1">
+            {unitGroups.map((unitGroup, index) => {
               const isSelected = expandedUnits.has(unitGroup.unit);
+              const colors = ['bg-red-200', 'bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-purple-200', 'bg-pink-200'];
+              const selectedColors = ['bg-red-400', 'bg-blue-400', 'bg-green-400', 'bg-yellow-400', 'bg-purple-400', 'bg-pink-400'];
+              const colorIndex = index % colors.length;
+              
+              // Extract unit number from unit name (e.g., "Unit 1" -> "U1")
+              const unitNumber = unitGroup.unit.replace(/Unit\s*/i, 'U');
               
               return (
                 <div
                   key={unitGroup.unit}
-                  className={`flex items-center justify-between py-2 rounded-md cursor-pointer transition-colors ${
+                  className={`flex items-center justify-between py-2 px-1 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
                     isSelected 
-                      ? 'bg-blue-100 text-blue-700 border border-blue-200' 
-                      : 'hover:bg-gray-100 text-gray-700'
-                  } ${programFilter === 'Grapeseed' ? 'px-1' : 'px-3'}`}
+                      ? `${selectedColors[colorIndex]} text-white shadow-lg border-2 border-white` 
+                      : `${colors[colorIndex]} text-gray-800 hover:shadow-md border-2 border-transparent`
+                  }`}
                   onClick={() => toggleUnit(unitGroup.unit)}
                 >
-                  <span className={`font-medium truncate ${programFilter === 'Grapeseed' ? 'text-xs' : 'text-sm'}`}>
-                    {unitGroup.unit}
+                  <span className="font-bold truncate text-xs">
+                    {unitNumber}
                   </span>
                   <div className="flex items-center gap-1">
                     {unitGroup.topics.length > 0 && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className={`p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-100 ${
-                          programFilter === 'Grapeseed' ? 'h-5 w-5' : 'h-6 w-6'
-                        }`}
+                        className="p-0 text-white hover:text-yellow-200 hover:bg-white/20 rounded-full h-4 w-4"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedUnitForGame(unitGroup);
@@ -253,7 +284,7 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
                           setIsUnitSelectionOpen(true);
                         }}
                       >
-                        <Play className={programFilter === 'Grapeseed' ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
+                        <Play className="h-2 w-2" />
                       </Button>
                     )}
                   </div>
@@ -265,12 +296,14 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 bg-gradient-to-br from-white to-blue-50">
         {expandedUnits.size === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <BookOpen className="h-12 w-12 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Select a Unit</h3>
-            <p>Choose a unit from the sidebar to view its topics and content.</p>
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="text-6xl mb-4 animate-bounce">📖</div>
+            <h3 className="text-2xl font-bold mb-4 text-purple-700">Let's Start Learning!</h3>
+            <p className="text-lg text-blue-600 bg-white px-6 py-3 rounded-full shadow-lg">
+              🎯 Pick a colorful unit from the sidebar to begin your adventure!
+            </p>
           </div>
         ) : (
           unitGroups.map((unitGroup) => {
@@ -280,38 +313,37 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
             
             return (
               <div key={`${unitGroup.unit}-content`} className="w-full">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-blue-700">{unitGroup.unit}</h2>
-                </div>
-                
                 <div className="space-y-4">
-                  {/* Compact Lesson Buttons - Fixed Layout */}
-                  <div className="flex flex-wrap gap-2">
+                  {/* Compact Lesson Buttons */}
+                  <div className="flex flex-wrap gap-2 justify-center">
                     {unitGroup.topics.map((topic, index) => {
                       const topicContent = getContentForTopic(topic);
                       const questionCounts = topicContent.map(content => Number(content.question_count) || 0).filter(count => count > 0);
                       const totalQuestions = questionCounts.reduce((sum, count) => sum + count, 0);
                       const isExpanded = expandedTopics.has(topic.id);
                       const lessonNumber = index + 1;
+                      const buttonColors = ['bg-red-400', 'bg-blue-400', 'bg-green-400', 'bg-yellow-400', 'bg-purple-400', 'bg-pink-400'];
+                      const hoverColors = ['hover:bg-red-500', 'hover:bg-blue-500', 'hover:bg-green-500', 'hover:bg-yellow-500', 'hover:bg-purple-500', 'hover:bg-pink-500'];
+                      const colorIndex = index % buttonColors.length;
                       
                       return (
                         <div key={topic.id} className="relative">
-                          {/* Compact Lesson Button */}
+                          {/* Smaller Lesson Button */}
                           <button
-                            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all cursor-pointer text-xs font-semibold relative ${
+                            className={`flex items-center justify-center w-12 h-12 rounded-full border-2 border-white transition-all duration-300 cursor-pointer text-xs font-bold relative transform hover:scale-105 shadow-md ${
                               isExpanded 
-                                ? 'bg-purple-600 text-white border-purple-600 shadow-lg' 
-                                : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400 hover:bg-purple-50'
+                                ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg scale-105' 
+                                : `${buttonColors[colorIndex]} ${hoverColors[colorIndex]} text-white`
                             }`}
                             onClick={() => toggleTopic(topic.id)}
                             title={topic.topic || 'Untitled Topic'}
                           >
                             L{lessonNumber}
                             
-                            {/* Small Play Button Inside */}
+                            {/* Smaller Play Button */}
                             {totalQuestions > 0 && (
                               <div
-                                className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                                className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-md"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const topicContent = getContentForTopic(topic);
@@ -323,9 +355,9 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
                                     router.push(`/setup?topicId=${topic.id}`);
                                   }
                                 }}
-                                title="Start Game"
+                                title="🎮 Start Game!"
                               >
-                                <Play className="h-2.5 w-2.5 text-white" />
+                                <Play className="h-3 w-3 text-white" />
                               </div>
                             )}
                           </button>
@@ -334,7 +366,7 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
                     })}
                   </div>
 
-                  {/* Content Display Area - Separate Section Below */}
+                  {/* Content Display Area */}
                   {Array.from(expandedTopics).map(topicId => {
                     const topic = unitGroup.topics.find(t => t.id === topicId);
                     if (!topic) return null;
@@ -343,49 +375,51 @@ export default function TopicsByUnit({ programFilter }: TopicsByUnitProps) {
                     const lessonNumber = unitGroup.topics.findIndex(t => t.id === topicId) + 1;
                     
                     return (
-                      <div key={`content-${topicId}`} className="border rounded-lg p-4 bg-gray-50">
-                        <h4 className="font-semibold text-lg mb-3 text-purple-700">
-                          {topic.topic && topic.topic.toLowerCase().includes('lesson') 
-                            ? topic.topic 
-                            : `Lesson ${lessonNumber}: ${topic.topic}`
-                          }
-                        </h4>
+                      <div key={`content-${topicId}`} className="bg-gradient-to-r from-pink-100 to-purple-100 border-4 border-pink-300 rounded-2xl p-6 shadow-lg">
                         
                         {topicContent.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                            {topicContent.map((content, index) => (
-                              <Card 
-                                key={content.id} 
-                                className="hover:shadow-sm transition-shadow bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 border-l-4 border-l-orange-400 cursor-pointer"
-                                onClick={() => handleViewContent(content.id)}
-                              >
-                                <CardContent className="p-3">
-                                  <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-2 flex-grow min-w-0">
-                                      <div className="flex items-center justify-center w-6 h-6 text-xs font-medium border border-orange-300 rounded bg-orange-100 text-orange-700 flex-shrink-0">
-                                        {index + 1}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {topicContent.map((content, index) => {
+                              const cardColors = ['from-red-200 to-red-300', 'from-blue-200 to-blue-300', 'from-green-200 to-green-300', 'from-yellow-200 to-yellow-300', 'from-purple-200 to-purple-300', 'from-pink-200 to-pink-300'];
+                              const borderColors = ['border-red-400', 'border-blue-400', 'border-green-400', 'border-yellow-400', 'border-purple-400', 'border-pink-400'];
+                              const colorIndex = index % cardColors.length;
+                              
+                              return (
+                                <Card 
+                                  key={content.id} 
+                                  className={`hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${cardColors[colorIndex]} ${borderColors[colorIndex]} border-4 rounded-2xl cursor-pointer overflow-hidden`}
+                                  onClick={() => handleViewContent(content.id)}
+                                >
+                                  <CardContent className="p-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div className="flex items-center gap-3 flex-grow min-w-0">
+                                        <div className="flex items-center justify-center w-8 h-8 text-sm font-bold border-2 border-white rounded-full bg-white text-gray-700 shadow-md flex-shrink-0">
+                                          {index + 1}
+                                        </div>
+                                        <h5 className="font-bold text-sm text-gray-800 leading-tight">{content.title}</h5>
                                       </div>
-                                      <h5 className="font-medium text-sm truncate text-orange-900">{content.title}</h5>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-10 w-10 p-0 bg-white hover:bg-yellow-100 text-purple-600 hover:text-purple-700 rounded-full shadow-md flex-shrink-0 transition-all duration-300"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          router.push(`/setup?contentId=${content.id}`);
+                                        }}
+                                      >
+                                        <Play className="h-4 w-4" />
+                                      </Button>
                                     </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-7 w-7 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-100 flex-shrink-0"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        router.push(`/setup?contentId=${content.id}`);
-                                      }}
-                                    >
-                                      <Play className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
+                                  </CardContent>
+                                </Card>
+                              );
+                            })}
                           </div>
                         ) : (
-                          <div className="text-center py-4 text-sm text-muted-foreground bg-white rounded-lg border">
-                            No content available for this lesson
+                          <div className="text-center py-8 bg-white rounded-2xl border-4 border-dashed border-gray-300">
+                            <div className="text-4xl mb-2">🎭</div>
+                            <p className="text-lg font-semibold text-gray-600">No activities yet!</p>
+                            <p className="text-sm text-gray-500">Check back soon for fun learning content!</p>
                           </div>
                         )}
                       </div>

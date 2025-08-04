@@ -3,6 +3,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fun rainbow border for children's interface */
+.border-rainbow {
+  border-image: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff) 1;
+  background: linear-gradient(white, white) padding-box, 
+              linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff) border-box;
+}
+
+/* Animations for child-friendly interface */
+@keyframes wiggle {
+  0%, 7% { transform: rotateZ(0); }
+  15% { transform: rotateZ(-15deg); }
+  20% { transform: rotateZ(10deg); }
+  25% { transform: rotateZ(-10deg); }
+  30% { transform: rotateZ(6deg); }
+  35% { transform: rotateZ(-4deg); }
+  40%, 100% { transform: rotateZ(0); }
+}
+
+.animate-wiggle {
+  animation: wiggle 2s ease-in-out infinite;
+}
+
 @layer base {
   :root {
     --background: 217 91% 95%; /* #E8F0FE - Light desaturated blue */
