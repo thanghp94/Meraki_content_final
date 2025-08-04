@@ -219,6 +219,7 @@ export default function UnifiedReviewModal({ isOpen, onClose, content, contentIt
         console.log('=== QUESTIONS DEBUG END ===');
       }
 
+
       // Shuffle items for variety
       const shuffledItems = items.sort(() => Math.random() - 0.5);
       console.log(`Total review items collected: ${shuffledItems.length} (${shuffledItems.filter(i => i.type === 'vocabulary').length} vocabulary, ${shuffledItems.filter(i => i.type === 'question').length} questions)`);

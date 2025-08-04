@@ -5,6 +5,7 @@ import { BookOpen } from 'lucide-react';
 import ContentViewModal from '@/components/ui/content-view-modal-fixed';
 import GameSetupModal from '@/components/library/GameSetupModal';
 import UnifiedReviewModal from '@/components/quiz/UnifiedReviewModal';
+import { useLibrary } from '@/contexts/LibraryContext';
 
 // Import refactored components
 import { TopicsByUnitLayout } from './components/layout/TopicsByUnitLayout';
@@ -35,6 +36,9 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
     handleTopicPlayClick,
     getContentForTopic,
   } = useTopicsByUnit(programFilter);
+
+  // Get library context functions for content management
+  const { addContent, markTopicAsLoaded } = useLibrary();
 
   // Modal states
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
@@ -124,29 +128,67 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
     setIsReviewModalOpen(true);
   };
 
-  const handleTopicReview = (topic: Topic, topicContent: Content[]) => {
+  const handleTopicReview = async (topic: Topic, topicContent: Content[]) => {
     console.log('Opening review modal for topic:', topic.topic, 'with', topicContent.length, 'content items');
+    
+    // If no content is provided, try to load it from the cache or API
+    let actualTopicContent = topicContent;
+    if (actualTopicContent.length === 0) {
+      console.log('No content provided, attempting to load content for topic:', topic.id);
+      
+      // First try to get from cache
+      actualTopicContent = getContentForTopic(topic);
+      
+      // If still no content, load from API
+      if (actualTopicContent.length === 0) {
+        try {
+          console.log('Loading content from API for topic:', topic.id);
+          const { loadTopicContent } = await import('./utils/topicUtils');
+          actualTopicContent = await loadTopicContent(topic.id);
+          console.log('Loaded', actualTopicContent.length, 'content items from API');
+          
+          // Add to cache for future use
+          if (actualTopicContent.length > 0) {
+            addContent(actualTopicContent);
+            markTopicAsLoaded(topic.id);
+          }
+        } catch (error) {
+          console.error('Error loading content for topic review:', error);
+          // Continue with empty content - the modal will show "No Review Items Found"
+        }
+      }
+    }
+    
+    console.log('Final content count for topic review:', actualTopicContent.length);
+    
+    // Aggregate vocabulary from all content items
+    const allVocabulary = actualTopicContent
+      .map(content => content.infor1 || '')
+      .filter(infor1 => infor1.trim().length > 0)
+      .join(', '); // Combine all vocabulary with commas
+    
+    console.log('Aggregated vocabulary for topic review:', allVocabulary);
     
     // Create a combined content object that represents the entire topic
     const combinedContent: Content = {
       id: `topic-${topic.id}`,
       title: topic.topic || 'Topic Review',
-      infor1: '', // We'll pass individual content items instead
+      infor1: allVocabulary, // Now contains aggregated vocabulary from all content items
       infor2: '',
-      image1: topicContent.find(c => c.image1)?.image1 || '',
-      image2: topicContent.find(c => c.image2)?.image2 || '',
-      video1: topicContent.find(c => c.video1)?.video1 || '',
-      video2: topicContent.find(c => c.video2)?.video2 || '',
+      image1: actualTopicContent.find(c => c.image1)?.image1 || '',
+      image2: actualTopicContent.find(c => c.image2)?.image2 || '',
+      video1: actualTopicContent.find(c => c.video1)?.video1 || '',
+      video2: actualTopicContent.find(c => c.video2)?.video2 || '',
       topicid: topic.id,
       date_created: new Date().toISOString(),
-      question_count: topicContent.reduce((sum, c) => sum + (c.question_count || 0), 0),
+      question_count: actualTopicContent.reduce((sum, c) => sum + (c.question_count || 0), 0),
       visible: true,
       order_index: 0
     };
 
     setReviewContent(combinedContent);
     // Store the individual content items for the modal
-    setTopicContentItems(topicContent);
+    setTopicContentItems(actualTopicContent);
     setIsReviewModalOpen(true);
   };
 
