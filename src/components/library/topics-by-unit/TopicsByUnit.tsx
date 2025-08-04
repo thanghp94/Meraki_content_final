@@ -43,6 +43,7 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
   const [gameSetupData, setGameSetupData] = useState<GameSetupData>({});
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewContent, setReviewContent] = useState<Content | null>(null);
+  const [topicContentItems, setTopicContentItems] = useState<Content[]>([]);
 
   // Prevent hydration issues by not rendering until mounted
   if (!isMounted) {
@@ -123,9 +124,36 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
     setIsReviewModalOpen(true);
   };
 
+  const handleTopicReview = (topic: Topic, topicContent: Content[]) => {
+    console.log('Opening review modal for topic:', topic.topic, 'with', topicContent.length, 'content items');
+    
+    // Create a combined content object that represents the entire topic
+    const combinedContent: Content = {
+      id: `topic-${topic.id}`,
+      title: topic.topic || 'Topic Review',
+      infor1: '', // We'll pass individual content items instead
+      infor2: '',
+      image1: topicContent.find(c => c.image1)?.image1 || '',
+      image2: topicContent.find(c => c.image2)?.image2 || '',
+      video1: topicContent.find(c => c.video1)?.video1 || '',
+      video2: topicContent.find(c => c.video2)?.video2 || '',
+      topicid: topic.id,
+      date_created: new Date().toISOString(),
+      question_count: topicContent.reduce((sum, c) => sum + (c.question_count || 0), 0),
+      visible: true,
+      order_index: 0
+    };
+
+    setReviewContent(combinedContent);
+    // Store the individual content items for the modal
+    setTopicContentItems(topicContent);
+    setIsReviewModalOpen(true);
+  };
+
   const closeReviewModal = () => {
     setIsReviewModalOpen(false);
     setReviewContent(null);
+    setTopicContentItems([]);
   };
 
   // Render sidebar
@@ -151,6 +179,7 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
       getContentForTopic={getContentForTopic}
       onTopicClick={toggleTopic}
       onTopicPlayClick={handleTopicPlay}
+      onTopicReviewClick={handleTopicReview}
       onContentClick={handleViewContent}
       onContentPlayClick={handleContentPlay}
       onContentReviewClick={handleContentReview}
@@ -191,6 +220,7 @@ export default function TopicsByUnit({ programFilter, onProgramChange }: TopicsB
           isOpen={isReviewModalOpen}
           onClose={closeReviewModal}
           content={reviewContent}
+          contentItems={topicContentItems}
         />
       )}
     </>

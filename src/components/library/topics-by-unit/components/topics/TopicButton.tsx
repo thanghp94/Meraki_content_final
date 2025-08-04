@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Play } from 'lucide-react';
+import { Play, BookOpen } from 'lucide-react';
 
 interface Topic {
   id: string;
@@ -33,6 +33,7 @@ interface TopicButtonProps {
   topicContent: Content[];
   onTopicClick: (topicId: string) => void;
   onPlayClick: (topic: Topic, topicContent: Content[]) => void;
+  onReviewClick?: (topic: Topic, topicContent: Content[]) => void;
 }
 
 export const TopicButton: React.FC<TopicButtonProps> = ({
@@ -41,7 +42,8 @@ export const TopicButton: React.FC<TopicButtonProps> = ({
   isExpanded,
   topicContent,
   onTopicClick,
-  onPlayClick
+  onPlayClick,
+  onReviewClick
 }) => {
   const lessonNumber = index + 1;
   const buttonColors = ['bg-red-400', 'bg-blue-400', 'bg-green-400', 'bg-yellow-400', 'bg-purple-400', 'bg-pink-400'];
@@ -73,6 +75,20 @@ export const TopicButton: React.FC<TopicButtonProps> = ({
         >
           <Play className="h-3 w-3 text-white" />
         </div>
+
+        {/* Review Button */}
+        {onReviewClick && (
+          <div
+            className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-400 hover:from-blue-500 hover:to-purple-500 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-md"
+            onClick={(e) => {
+              e.stopPropagation();
+              onReviewClick(topic, topicContent);
+            }}
+            title="📚 Review Vocabulary & Questions!"
+          >
+            <BookOpen className="h-3 w-3 text-white" />
+          </div>
+        )}
       </button>
     </div>
   );

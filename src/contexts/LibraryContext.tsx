@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Topic {
   id: string;
@@ -50,6 +51,8 @@ interface LibraryContextType {
   markTopicAsLoaded: (topicId: string) => void;
   isTopicLoaded: (topicId: string) => boolean;
   resetLibraryState: () => void;
+  saveStateToUrl: () => void;
+  restoreStateFromUrl: () => void;
 }
 
 const initialState: LibraryState = {
@@ -108,6 +111,50 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     setLibraryState(initialState);
   };
 
+  // Save current state to localStorage for persistence
+  const saveStateToUrl = () => {
+    try {
+      const stateToSave = {
+        expandedUnits: Array.from(libraryState.expandedUnits),
+        expandedTopics: Array.from(libraryState.expandedTopics),
+        activeProgram: libraryState.activeProgram,
+        loadedTopics: Array.from(libraryState.loadedTopics)
+      };
+      localStorage.setItem('libraryState', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Failed to save library state:', error);
+    }
+  };
+
+  // Restore state from localStorage
+  const restoreStateFromUrl = () => {
+    try {
+      const savedState = localStorage.getItem('libraryState');
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        setLibraryState(prev => ({
+          ...prev,
+          expandedUnits: new Set(parsedState.expandedUnits || []),
+          expandedTopics: new Set(parsedState.expandedTopics || []),
+          activeProgram: parsedState.activeProgram || 'grapeseed',
+          loadedTopics: new Set(parsedState.loadedTopics || [])
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to restore library state:', error);
+    }
+  };
+
+  // Auto-save state when it changes (disabled temporarily to prevent infinite loops)
+  // TODO: Fix the infinite loop issue and re-enable auto-save
+  // useEffect(() => {
+  //   const timeoutId = setTimeout(() => {
+  //     saveStateToUrl();
+  //   }, 100); // Small debounce to prevent rapid updates
+
+  //   return () => clearTimeout(timeoutId);
+  // }, [libraryState.expandedUnits, libraryState.expandedTopics, libraryState.activeProgram, libraryState.loadedTopics]);
+
   return (
     <LibraryContext.Provider
       value={{
@@ -121,6 +168,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         markTopicAsLoaded,
         isTopicLoaded,
         resetLibraryState,
+        saveStateToUrl,
+        restoreStateFromUrl,
       }}
     >
       {children}

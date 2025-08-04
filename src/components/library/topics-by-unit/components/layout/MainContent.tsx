@@ -15,6 +15,7 @@ interface MainContentProps {
   getContentForTopic: (topic: Topic) => Content[];
   onTopicClick: (topicId: string) => void;
   onTopicPlayClick: (topic: Topic, topicContent: Content[]) => void;
+  onTopicReviewClick?: (topic: Topic, topicContent: Content[]) => void;
   onContentClick: (contentId: string) => void;
   onContentPlayClick: (content: Content) => void;
   onContentReviewClick?: (content: Content) => void;
@@ -28,6 +29,7 @@ export const MainContent: React.FC<MainContentProps> = ({
   getContentForTopic,
   onTopicClick,
   onTopicPlayClick,
+  onTopicReviewClick,
   onContentClick,
   onContentPlayClick,
   onContentReviewClick
@@ -60,6 +62,7 @@ export const MainContent: React.FC<MainContentProps> = ({
                       topicContent={topicContent}
                       onTopicClick={onTopicClick}
                       onPlayClick={onTopicPlayClick}
+                      onReviewClick={onTopicReviewClick}
                     />
                   );
                 })}

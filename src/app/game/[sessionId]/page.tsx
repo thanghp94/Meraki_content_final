@@ -154,8 +154,8 @@ export default function GamePage() {
             <Button onClick={() => router.push('/setup')} className="w-full">
               Play Again
             </Button>
-            <Button onClick={() => router.push('/')} variant="outline" className="w-full">
-              Back to Home
+            <Button onClick={() => router.push('/library')} variant="outline" className="w-full">
+              Back to Library
             </Button>
           </CardFooter>
         </Card>

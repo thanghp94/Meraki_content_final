@@ -128,7 +128,6 @@ export default function UnifiedReviewModal({ isOpen, onClose, content, contentIt
         
         itemsToProcess.forEach((item, index) => {
           console.log(`Processing content item ${index + 1}:`, item.title);
-          console.log(`Content item full object:`, item);
           console.log(`Content.infor1 raw:`, item.infor1);
           console.log(`Content.infor1 type:`, typeof item.infor1);
           
@@ -188,28 +187,21 @@ export default function UnifiedReviewModal({ isOpen, onClose, content, contentIt
         
         // Fetch questions from all content items
         for (const item of itemsToProcess) {
-          console.log(`Fetching questions for content item: ${item.title} (ID: ${item.id}, Type: ${typeof item.id})`);
+          console.log(`Fetching questions for content item: ${item.title} (ID: ${item.id})`);
           
           try {
-            // Ensure contentId is a string
-            const contentId = String(item.id);
-            console.log(`Making API call with contentId: "${contentId}"`);
-            
-            const response = await fetch(`/api/admin/questions?contentId=${contentId}`);
-            console.log(`API response status: ${response.status}`);
+            const response = await fetch(`/api/admin/questions?contentId=${item.id}`);
             
             if (response.ok) {
               const questions: QuestionItem[] = await response.json();
               console.log(`Found ${questions.length} questions for content item: ${item.title}`);
-              console.log('Questions data:', questions);
               
               questions.forEach((question) => {
-                console.log('Adding question:', question.id, 'contentid:', question.contentid);
+                console.log('Adding question:', question.id);
                 items.push({ type: 'question', data: question });
               });
             } else {
-              const errorText = await response.text();
-              console.error(`Failed to fetch questions for content item ${item.title}:`, response.status, response.statusText, errorText);
+              console.error(`Failed to fetch questions for content item ${item.title}:`, response.status, response.statusText);
             }
           } catch (error) {
             console.error(`Error fetching questions for content item ${item.title}:`, error);
@@ -294,52 +286,6 @@ export default function UnifiedReviewModal({ isOpen, onClose, content, contentIt
       });
       return;
     }
-    
-    // TEMPORARY: Add test data to verify the modal works
-    console.log('=== ADDING TEST DATA ===');
-    const testItems: ReviewItem[] = [];
-    
-    if (settings.includeVocabulary) {
-      testItems.push({
-        type: 'vocabulary',
-        data: {
-          id: 'test-vocab-1',
-          word: 'airplane',
-          partOfSpeech: 'noun',
-          definition: 'A powered flying vehicle with fixed wings and a weight greater than that of the air it displaces.',
-          exampleSentence: 'The airplane took off from the runway.',
-          phoneticTranscription: 'ˈeəpleɪn',
-          imageUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400',
-          tags: ['transportation', 'vehicle']
-        }
-      });
-    }
-    
-    if (settings.includeQuestions) {
-      testItems.push({
-        type: 'question',
-        data: {
-          id: 'test-question-1',
-          chuong_trinh: 'Test Program',
-          questionlevel: 'L1',
-          contentid: content.id.toString(),
-          question_type: 'multiple_choice',
-          noi_dung: 'What is the capital of France?',
-          cau_tra_loi_1: 'London',
-          cau_tra_loi_2: 'Berlin',
-          cau_tra_loi_3: 'Paris',
-          cau_tra_loi_4: 'Madrid',
-          correct_choice: '3',
-          time: '30',
-          answer: 'Paris',
-          explanation: 'Paris is the capital and largest city of France.'
-        }
-      });
-    }
-    
-    console.log('Test items created:', testItems);
-    setReviewItems(testItems);
-    setCurrentIndex(0);
     setShowSettings(false);
   };
 
@@ -391,7 +337,6 @@ export default function UnifiedReviewModal({ isOpen, onClose, content, contentIt
                 </div>
               </div>
             )}
-
           </div>
         ) : (
           /* Side by Side Layout - After clicking */
@@ -801,34 +746,4 @@ export default function UnifiedReviewModal({ isOpen, onClose, content, contentIt
             {!showContent ? (
               <Button onClick={handleRevealContent} variant="outline" size="lg" className="text-[2vh] px-[3vh] py-[1vh]">
                 <Eye className="mr-[1vh] h-[2.5vh] w-[2.5vh]" /> 
-                {currentItem?.type === 'vocabulary' ? 'Reveal Word' : 'Show Question'}
-              </Button>
-            ) : assessmentMode && showAnswer ? (
-              <>
-                <Button
-                  onClick={() => handleAssessment(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white text-[2vh] px-[3vh] py-[1vh]"
-                  size="lg"
-                >
-                  <CheckCircle className="mr-[1vh] h-[2.5vh] w-[2.5vh]" /> Correct
-                </Button>
-                <Button
-                  onClick={() => handleAssessment(false)}
-                  variant="destructive"
-                  size="lg"
-                  className="text-[2vh] px-[3vh] py-[1vh]"
-                >
-                  <XCircle className="mr-[1vh] h-[2.5vh] w-[2.5vh]" /> Incorrect
-                </Button>
-              </>
-            ) : (
-              <Button onClick={handleClose} variant="outline" size="lg" className="text-[2vh] px-[3vh] py-[1vh]">
-                Close Review
-              </Button>
-            )}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
+                {currentItem
