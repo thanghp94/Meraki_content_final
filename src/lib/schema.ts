@@ -74,6 +74,21 @@ export const questions = merakiSchema.table('question', {
   answer: text('answer'),
 });
 
+// Vocabulary table in meraki schema
+export const vocabulary = merakiSchema.table('vocabulary', {
+  id: uuid('id').primaryKey(),
+  word: text('word').notNull(),
+  partOfSpeech: text('part_of_speech').notNull(),
+  definition: text('definition').notNull(),
+  exampleSentence: text('example_sentence'),
+  phoneticTranscription: text('phonetic_transcription'),
+  imageUrl: text('image_url'),
+  videoUrl: text('video_url'),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
 // Game-Question Links table (many-to-many relationship) - in public schema
 export const gameQuestionLinks = pgTable('game_question_links', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -98,3 +113,5 @@ export type NewGameQuestionLink = typeof gameQuestionLinks.$inferInsert;
 export const gameQuestions = questions; // Point to the central questions table
 export type GameQuestion = Question;
 export type NewGameQuestion = NewQuestion;
+export type Vocabulary = typeof vocabulary.$inferSelect;
+export type NewVocabulary = typeof vocabulary.$inferInsert;

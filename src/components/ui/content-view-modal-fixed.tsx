@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, ChevronLeft, ChevronRight, Play, Volume2, Expand } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Play, Volume2, Expand, BookOpen } from 'lucide-react';
 import TextToSpeechButton from '@/components/ui/text-to-speech-button';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { useToast } from '@/hooks/use-toast';
 import ContentQuizModal from '@/components/ui/content-quiz-modal-colorful';
+import VocabularyFlashcardModal from '@/components/ui/vocabulary-flashcard-modal';
+import { extractVocabularyWords } from '@/lib/utils';
 
 interface ContentData {
   id: string;
@@ -90,6 +92,8 @@ export default function ContentViewModal({
   const [loading, setLoading] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<{type: 'image' | 'video', url: string} | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [showFlashcards, setShowFlashcards] = useState(false);
+  const [vocabularyWords, setVocabularyWords] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -141,6 +145,30 @@ export default function ContentViewModal({
   const formatContentForTTS = (content: ContentData) => {
     const fullContent = [content.infor1, content.infor2].filter(Boolean).join(' ');
     return `${content.title}. ${fullContent}`;
+  };
+
+  const handleOpenFlashcards = () => {
+    if (!content?.infor1) {
+      toast({
+        title: 'No Content',
+        description: 'No content available to extract vocabulary from.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const words = extractVocabularyWords(content.infor1);
+    if (words.length === 0) {
+      toast({
+        title: 'No Vocabulary Found',
+        description: 'No vocabulary words found in the content. Words should be separated by commas (,) or forward slashes (/).',
+        variant: 'default',
+      });
+      return;
+    }
+
+    setVocabularyWords(words);
+    setShowFlashcards(true);
   };
 
   if (!isOpen) return null;
@@ -233,13 +261,36 @@ export default function ContentViewModal({
                                 className="text-gray-700"
                               />
                             </div>
-                            <TextToSpeechButton
-                              text={content.infor1}
-                              variant="ghost"
-                              size="sm"
-                              iconOnly={true}
-                              className="h-6 w-6 mt-1"
-                            />
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 mt-1"
+                                onClick={() => {
+                                  // Trigger text-to-speech for this section
+                                  const utterance = new SpeechSynthesisUtterance(content.infor1);
+                                  speechSynthesis.speak(utterance);
+                                }}
+                              >
+                                <Play className="h-3 w-3" />
+                              </Button>
+                              <TextToSpeechButton
+                                text={content.infor1}
+                                variant="ghost"
+                                size="sm"
+                                iconOnly={true}
+                                className="h-6 w-6 mt-1"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 mt-1"
+                                onClick={handleOpenFlashcards}
+                                title="Open vocabulary flashcards"
+                              >
+                                <BookOpen className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -253,13 +304,27 @@ export default function ContentViewModal({
                                 className="text-gray-700"
                               />
                             </div>
-                            <TextToSpeechButton
-                              text={content.infor2}
-                              variant="ghost"
-                              size="sm"
-                              iconOnly={true}
-                              className="h-6 w-6 mt-1"
-                            />
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 mt-1"
+                                onClick={() => {
+                                  // Trigger text-to-speech for this section
+                                  const utterance = new SpeechSynthesisUtterance(content.infor2!);
+                                  speechSynthesis.speak(utterance);
+                                }}
+                              >
+                                <Play className="h-3 w-3" />
+                              </Button>
+                              <TextToSpeechButton
+                                text={content.infor2}
+                                variant="ghost"
+                                size="sm"
+                                iconOnly={true}
+                                className="h-6 w-6 mt-1"
+                              />
+                            </div>
                           </div>
                         </div>
                       )}
@@ -410,6 +475,13 @@ export default function ContentViewModal({
           contentTitle={content.title}
         />
       )}
+
+      {/* Vocabulary Flashcard Modal */}
+      <VocabularyFlashcardModal
+        isOpen={showFlashcards}
+        onClose={() => setShowFlashcards(false)}
+        words={vocabularyWords}
+      />
     </>
   );
 }
