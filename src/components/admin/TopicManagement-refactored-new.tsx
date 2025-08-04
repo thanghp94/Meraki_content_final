@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { UnitSelector } from './topic-management';
-import { useTopicManagement } from './topic-management/hooks/useTopicManagement';
+import { 
+  UnitSelector, 
+  useTopicManagement,
+} from './topic-management';
 
 // Import refactored components
 import { TopicManagementHeader } from './topic-management/components/layout/TopicManagementHeader';
