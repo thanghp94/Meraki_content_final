@@ -1,5 +1,5 @@
 // Main component
-export { default as TopicsByUnit } from './TopicsByUnit';
+export { TopicsByUnitLayout as TopicsByUnit } from './components/layout/TopicsByUnitLayout';
 
 // Layout components
 export { TopicsByUnitLayout } from './components/layout/TopicsByUnitLayout';
