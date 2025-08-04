@@ -295,52 +295,9 @@ export default function UnifiedReviewModal({ isOpen, onClose, content, contentIt
       return;
     }
     
-    // TEMPORARY: Add test data to verify the modal works
-    console.log('=== ADDING TEST DATA ===');
-    const testItems: ReviewItem[] = [];
-    
-    if (settings.includeVocabulary) {
-      testItems.push({
-        type: 'vocabulary',
-        data: {
-          id: 'test-vocab-1',
-          word: 'airplane',
-          partOfSpeech: 'noun',
-          definition: 'A powered flying vehicle with fixed wings and a weight greater than that of the air it displaces.',
-          exampleSentence: 'The airplane took off from the runway.',
-          phoneticTranscription: 'ˈeəpleɪn',
-          imageUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400',
-          tags: ['transportation', 'vehicle']
-        }
-      });
-    }
-    
-    if (settings.includeQuestions) {
-      testItems.push({
-        type: 'question',
-        data: {
-          id: 'test-question-1',
-          chuong_trinh: 'Test Program',
-          questionlevel: 'L1',
-          contentid: content.id.toString(),
-          question_type: 'multiple_choice',
-          noi_dung: 'What is the capital of France?',
-          cau_tra_loi_1: 'London',
-          cau_tra_loi_2: 'Berlin',
-          cau_tra_loi_3: 'Paris',
-          cau_tra_loi_4: 'Madrid',
-          correct_choice: '3',
-          time: '30',
-          answer: 'Paris',
-          explanation: 'Paris is the capital and largest city of France.'
-        }
-      });
-    }
-    
-    console.log('Test items created:', testItems);
-    setReviewItems(testItems);
-    setCurrentIndex(0);
     setShowSettings(false);
+    // The fetchReviewItems function will be called automatically by the useEffect
+    // when showSettings becomes false
   };
 
   const handleClose = () => {
